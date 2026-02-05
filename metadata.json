@@ -1,0 +1,7 @@
+{
+  "name": "Heritage AI",
+  "description": "A cultural preservation app that uses AI to translate dialects, explain cultural slang, and archive ancestral stories, starting with Jamaican Patois.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

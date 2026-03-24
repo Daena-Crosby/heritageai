@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,53 +11,64 @@ import {
 } from 'react-native';
 import { Audio } from 'expo-av';
 import * as DocumentPicker from 'expo-document-picker';
-import { uploadStory } from '../services/api';
+import { uploadStory, uploadStoryText, uploadStoryDocument } from '../services/api';
+
+type InputTab = 'audio' | 'document' | 'text';
+
+const DEFAULT_METADATA = {
+  title: '',
+  storytellerName: '',
+  storytellerLocation: '',
+  storytellerDialect: '',
+  ageGroup: '',
+  country: 'Jamaica',
+  language: 'Jamaican Patois',
+  theme: '',
+};
 
 export const RecordingScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
-  const [recordingUri, setRecordingUri] = useState<string | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
+  const [tab, setTab] = useState<InputTab>('audio');
+  const [metadata, setMetadata] = useState(DEFAULT_METADATA);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [metadata, setMetadata] = useState({
-    title: '',
-    storytellerName: '',
-    storytellerLocation: '',
-    storytellerDialect: '',
-    ageGroup: '',
-    country: 'Jamaica',
-    language: 'Jamaican Patois',
-    theme: '',
-  });
 
+  // Audio state
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioUri, setAudioUri] = useState<string | null>(null);
+
+  // Document state
+  const [docFile, setDocFile] = useState<{ uri: string; name: string; mimeType: string } | null>(null);
+
+  // Text state
+  const [storyText, setStoryText] = useState('');
+
+  // ============================
+  // Audio recording
+  // ============================
   const startRecording = async () => {
     try {
-      await Audio.requestPermissionsAsync();
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      const { recording } = await Audio.Recording.createAsync(
+      const { granted } = await Audio.requestPermissionsAsync();
+      if (!granted) {
+        Alert.alert('Permission needed', 'Microphone access is required to record audio.');
+        return;
+      }
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+      const { recording: rec } = await Audio.Recording.createAsync(
         Audio.RecordingOptionsPresets.HIGH_QUALITY
       );
-      setRecording(recording);
+      setRecording(rec);
       setIsRecording(true);
     } catch (err) {
-      console.error('Failed to start recording', err);
       Alert.alert('Error', 'Failed to start recording');
     }
   };
 
   const stopRecording = async () => {
     if (!recording) return;
-
     setIsRecording(false);
     await recording.stopAndUnloadAsync();
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-    });
-    const uri = recording.getURI();
-    setRecordingUri(uri);
+    await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+    setAudioUri(recording.getURI());
     setRecording(null);
   };
 
@@ -67,255 +78,348 @@ export const RecordingScreen: React.FC<{ navigation: any }> = ({ navigation }) =
         type: 'audio/*',
         copyToCacheDirectory: true,
       });
-
       if (!result.canceled && result.assets[0]) {
-        setRecordingUri(result.assets[0].uri);
+        setAudioUri(result.assets[0].uri);
       }
-    } catch (err) {
-      console.error('Error picking file', err);
+    } catch {
       Alert.alert('Error', 'Failed to pick audio file');
     }
   };
 
-  const handleUpload = async () => {
-    if (!recordingUri) {
-      Alert.alert('Error', 'Please record or upload an audio file');
+  // ============================
+  // Document picker
+  // ============================
+  const pickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          'text/plain',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/msword',
+        ],
+        copyToCacheDirectory: true,
+      });
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        setDocFile({
+          uri: asset.uri,
+          name: asset.name,
+          mimeType: asset.mimeType || 'text/plain',
+        });
+      }
+    } catch {
+      Alert.alert('Error', 'Failed to pick document');
+    }
+  };
+
+  // ============================
+  // Submit
+  // ============================
+  const handleSubmit = async () => {
+    if (!metadata.title.trim()) {
+      Alert.alert('Required', 'Please enter a story title.');
       return;
     }
 
-    if (!metadata.title.trim()) {
-      Alert.alert('Error', 'Please enter a story title');
+    if (tab === 'audio' && !audioUri) {
+      Alert.alert('Required', 'Please record or select an audio file.');
+      return;
+    }
+    if (tab === 'document' && !docFile) {
+      Alert.alert('Required', 'Please select a document file.');
+      return;
+    }
+    if (tab === 'text' && storyText.trim().length < 10) {
+      Alert.alert('Required', 'Please enter at least 10 characters of story text.');
       return;
     }
 
     try {
       setIsProcessing(true);
-      const result = await uploadStory(recordingUri, metadata);
-      Alert.alert('Success', 'Story uploaded and processed successfully!', [
-        {
-          text: 'OK',
-          onPress: () => navigation.navigate('Home'),
-        },
+
+      if (tab === 'audio') {
+        await uploadStory(audioUri!, metadata);
+      } else if (tab === 'document') {
+        await uploadStoryDocument(docFile!.uri, docFile!.name, docFile!.mimeType, metadata);
+      } else {
+        await uploadStoryText(storyText, metadata);
+      }
+
+      Alert.alert('Success!', 'Your story is being processed. Check back shortly for illustrations and translation.', [
+        { text: 'OK', onPress: () => navigation.navigate('Home') },
       ]);
     } catch (error: any) {
-      console.error('Upload error:', error);
-      Alert.alert('Error', error.response?.data?.error || 'Failed to upload story');
+      Alert.alert('Upload Failed', error.response?.data?.error || error.message || 'Something went wrong.');
     } finally {
       setIsProcessing(false);
     }
   };
 
+  const meta = (field: keyof typeof metadata) => ({
+    value: metadata[field],
+    onChangeText: (text: string) => setMetadata({ ...metadata, [field]: text }),
+    editable: !isProcessing,
+    style: styles.input,
+  });
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backButton}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Record New Story</Text>
+        <Text style={styles.title}>Add New Story</Text>
+      </View>
+
+      {/* Input type tabs */}
+      <View style={styles.tabs}>
+        {(['audio', 'document', 'text'] as InputTab[]).map((t) => (
+          <TouchableOpacity
+            key={t}
+            style={[styles.tab, tab === t && styles.tabActive]}
+            onPress={() => setTab(t)}
+            disabled={isProcessing}
+          >
+            <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
+              {t === 'audio' ? '🎤 Audio' : t === 'document' ? '📄 Document' : '✏️ Type Story'}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.sectionTitle}>Audio Recording</Text>
 
-        <View style={styles.recordingContainer}>
-          {!recordingUri ? (
-            <>
+        {/* ====== AUDIO TAB ====== */}
+        {tab === 'audio' && (
+          <View style={styles.inputSection}>
+            <Text style={styles.sectionTitle}>Audio Recording</Text>
+            <Text style={styles.hint}>Record your voice or upload an audio file (mp3, m4a, wav, ogg)</Text>
+
+            {!audioUri ? (
+              <>
+                <TouchableOpacity
+                  style={[styles.button, isRecording ? styles.stopButton : styles.recordButton]}
+                  onPress={isRecording ? stopRecording : startRecording}
+                  disabled={isProcessing}
+                >
+                  <Text style={styles.buttonText}>
+                    {isRecording ? '⏹  Stop Recording' : '🎤  Start Recording'}
+                  </Text>
+                </TouchableOpacity>
+                <Text style={styles.orText}>— OR —</Text>
+                <TouchableOpacity
+                  style={[styles.button, styles.secondaryButton]}
+                  onPress={pickAudioFile}
+                  disabled={isProcessing}
+                >
+                  <Text style={styles.buttonText}>📁  Upload Audio File</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <View style={styles.selectedFile}>
+                <Text style={styles.selectedFileText}>✓  Audio ready</Text>
+                <TouchableOpacity onPress={() => setAudioUri(null)}>
+                  <Text style={styles.changeText}>Change</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* ====== DOCUMENT TAB ====== */}
+        {tab === 'document' && (
+          <View style={styles.inputSection}>
+            <Text style={styles.sectionTitle}>Upload Document</Text>
+            <Text style={styles.hint}>Supported formats: .txt, .doc, .docx (max 10MB)</Text>
+
+            {!docFile ? (
               <TouchableOpacity
-                style={[styles.button, styles.recordButton, isRecording && styles.recordingButton]}
-                onPress={isRecording ? stopRecording : startRecording}
+                style={[styles.button, styles.secondaryButton]}
+                onPress={pickDocument}
                 disabled={isProcessing}
               >
-                <Text style={styles.buttonText}>
-                  {isRecording ? '⏹ Stop Recording' : '🎤 Start Recording'}
-                </Text>
+                <Text style={styles.buttonText}>📄  Choose File</Text>
               </TouchableOpacity>
+            ) : (
+              <View style={styles.selectedFile}>
+                <Text style={styles.selectedFileText} numberOfLines={1}>✓  {docFile.name}</Text>
+                <TouchableOpacity onPress={() => setDocFile(null)}>
+                  <Text style={styles.changeText}>Change</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
 
-              <Text style={styles.orText}>OR</Text>
+        {/* ====== TEXT TAB ====== */}
+        {tab === 'text' && (
+          <View style={styles.inputSection}>
+            <Text style={styles.sectionTitle}>Type Your Story</Text>
+            <Text style={styles.hint}>Write or paste the full story text below</Text>
+            <TextInput
+              style={styles.storyTextInput}
+              placeholder="Once upon a time in Jamaica..."
+              value={storyText}
+              onChangeText={setStoryText}
+              multiline
+              numberOfLines={12}
+              textAlignVertical="top"
+              editable={!isProcessing}
+              maxLength={50000}
+            />
+            <Text style={styles.charCount}>{storyText.length} / 50,000 characters</Text>
+          </View>
+        )}
 
-              <TouchableOpacity
-                style={[styles.button, styles.uploadButton]}
-                onPress={pickAudioFile}
-                disabled={isProcessing}
-              >
-                <Text style={styles.buttonText}>📁 Upload Audio File</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <View style={styles.audioSelected}>
-              <Text style={styles.audioSelectedText}>✓ Audio file selected</Text>
-              <TouchableOpacity
-                style={styles.changeButton}
-                onPress={() => setRecordingUri(null)}
-              >
-                <Text style={styles.changeButtonText}>Change</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-
+        {/* ====== STORY INFO (shared) ====== */}
         <Text style={styles.sectionTitle}>Story Information</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Story Title *"
-          value={metadata.title}
-          onChangeText={(text) => setMetadata({ ...metadata, title: text })}
-          editable={!isProcessing}
-        />
+        <TextInput placeholder="Story Title *" {...meta('title')} />
+        <TextInput placeholder="Storyteller Name" {...meta('storytellerName')} />
+        <TextInput placeholder="Location (e.g., Kingston, Jamaica)" {...meta('storytellerLocation')} />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Storyteller Name"
-          value={metadata.storytellerName}
-          onChangeText={(text) => setMetadata({ ...metadata, storytellerName: text })}
-          editable={!isProcessing}
-        />
+        {tab === 'audio' && (
+          <TextInput placeholder="Dialect (e.g., Jamaican Patois)" {...meta('storytellerDialect')} />
+        )}
 
-        <TextInput
-          style={styles.input}
-          placeholder="Location"
-          value={metadata.storytellerLocation}
-          onChangeText={(text) => setMetadata({ ...metadata, storytellerLocation: text })}
-          editable={!isProcessing}
-        />
+        <Text style={styles.fieldLabel}>Age Group</Text>
+        <View style={styles.chipRow}>
+          {['children', 'teens', 'general'].map((ag) => (
+            <TouchableOpacity
+              key={ag}
+              style={[styles.chip, metadata.ageGroup === ag && styles.chipActive]}
+              onPress={() => setMetadata({ ...metadata, ageGroup: metadata.ageGroup === ag ? '' : ag })}
+              disabled={isProcessing}
+            >
+              <Text style={[styles.chipText, metadata.ageGroup === ag && styles.chipTextActive]}>
+                {ag.charAt(0).toUpperCase() + ag.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Dialect (e.g., Jamaican Patois)"
-          value={metadata.storytellerDialect}
-          onChangeText={(text) => setMetadata({ ...metadata, storytellerDialect: text })}
-          editable={!isProcessing}
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Age Group (e.g., children, teens, general)"
-          value={metadata.ageGroup}
-          onChangeText={(text) => setMetadata({ ...metadata, ageGroup: text })}
-          editable={!isProcessing}
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Theme (e.g., folklore, moral, anansi)"
-          value={metadata.theme}
-          onChangeText={(text) => setMetadata({ ...metadata, theme: text })}
-          editable={!isProcessing}
-        />
+        <TextInput placeholder="Language (e.g., Jamaican Patois, English)" {...meta('language')} />
+        <TextInput placeholder="Theme (e.g., folklore, anansi, moral)" {...meta('theme')} />
+        <TextInput placeholder="Country" {...meta('country')} />
 
         <TouchableOpacity
           style={[styles.button, styles.submitButton, isProcessing && styles.disabledButton]}
-          onPress={handleUpload}
+          onPress={handleSubmit}
           disabled={isProcessing}
         >
           {isProcessing ? (
-            <ActivityIndicator color="#FFF" />
+            <View style={styles.processingRow}>
+              <ActivityIndicator color="#FFF" />
+              <Text style={[styles.buttonText, { marginLeft: 10 }]}>Processing...</Text>
+            </View>
           ) : (
-            <Text style={styles.buttonText}>Upload & Process Story</Text>
+            <Text style={styles.buttonText}>
+              {tab === 'audio' ? '🚀  Upload & Process Story' :
+               tab === 'document' ? '🚀  Process Document' :
+               '🚀  Save & Illustrate Story'}
+            </Text>
           )}
         </TouchableOpacity>
+
+        <Text style={styles.processingNote}>
+          AI processing takes 1-3 minutes. Illustrations and translation will be generated automatically.
+        </Text>
       </View>
     </ScrollView>
   );
 };
 
+const BROWN = '#8B4513';
+
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1, backgroundColor: '#F5F5DC' },
+  header: { padding: 16, paddingTop: 60, backgroundColor: BROWN },
+  backButton: { fontSize: 16, color: '#F5E6D3', marginBottom: 8 },
+  title: { fontSize: 24, fontWeight: 'bold', color: '#FFF' },
+  tabs: {
+    flexDirection: 'row',
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  tab: {
     flex: 1,
-    backgroundColor: '#F5F5DC',
-  },
-  header: {
-    padding: 16,
-    paddingTop: 60,
-    backgroundColor: '#8B4513',
-  },
-  backButton: {
-    fontSize: 16,
-    color: '#F5E6D3',
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
-  content: {
-    padding: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 24,
-    marginBottom: 12,
-  },
-  recordingContainer: {
+    paddingVertical: 14,
     alignItems: 'center',
-    marginBottom: 24,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
+  tabActive: { borderBottomColor: BROWN },
+  tabText: { fontSize: 13, color: '#888' },
+  tabTextActive: { color: BROWN, fontWeight: 'bold' },
+  content: { padding: 16 },
+  inputSection: { marginBottom: 8 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#333', marginTop: 20, marginBottom: 6 },
+  hint: { fontSize: 13, color: '#888', marginBottom: 14 },
   button: {
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
-    marginVertical: 8,
-    minWidth: 200,
+    marginVertical: 6,
   },
-  recordButton: {
-    backgroundColor: '#8B4513',
-  },
-  recordingButton: {
-    backgroundColor: '#DC143C',
-  },
-  uploadButton: {
-    backgroundColor: '#4A90E2',
-  },
-  submitButton: {
-    backgroundColor: '#8B4513',
-    marginTop: 24,
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  orText: {
-    marginVertical: 12,
-    color: '#666',
-    fontSize: 14,
-  },
-  audioSelected: {
+  recordButton: { backgroundColor: BROWN },
+  stopButton: { backgroundColor: '#DC143C' },
+  secondaryButton: { backgroundColor: '#4A90E2' },
+  submitButton: { backgroundColor: BROWN, marginTop: 28 },
+  disabledButton: { opacity: 0.6 },
+  buttonText: { color: '#FFF', fontSize: 15, fontWeight: 'bold' },
+  processingRow: { flexDirection: 'row', alignItems: 'center' },
+  orText: { textAlign: 'center', color: '#999', marginVertical: 10, fontSize: 13 },
+  selectedFile: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    justifyContent: 'space-between',
+    padding: 14,
     backgroundColor: '#E8F5E9',
     borderRadius: 8,
-    marginVertical: 8,
+    marginVertical: 6,
   },
-  audioSelectedText: {
-    color: '#2E7D32',
-    fontSize: 16,
-    marginRight: 12,
+  selectedFileText: { color: '#2E7D32', fontSize: 15, flex: 1, marginRight: 10 },
+  changeText: { color: BROWN, fontSize: 14, fontWeight: '600' },
+  storyTextInput: {
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    padding: 14,
+    fontSize: 15,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    minHeight: 220,
+    lineHeight: 22,
   },
-  changeButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#8B4513',
-    borderRadius: 4,
-  },
-  changeButtonText: {
-    color: '#FFF',
-    fontSize: 14,
-  },
+  charCount: { fontSize: 12, color: '#AAA', textAlign: 'right', marginTop: 4, marginBottom: 8 },
   input: {
     backgroundColor: '#FFF',
     borderRadius: 8,
     padding: 12,
-    fontSize: 16,
-    marginBottom: 12,
+    fontSize: 15,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: '#E0E0E0',
+  },
+  fieldLabel: { fontSize: 14, color: '#555', marginBottom: 8, marginTop: 4 },
+  chipRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
+  chip: {
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F0E8E0',
+    borderWidth: 1,
+    borderColor: '#D0B090',
+  },
+  chipActive: { backgroundColor: BROWN, borderColor: BROWN },
+  chipText: { color: '#666', fontSize: 14 },
+  chipTextActive: { color: '#FFF', fontWeight: 'bold' },
+  processingNote: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 12,
+    marginBottom: 30,
+    lineHeight: 18,
   },
 });

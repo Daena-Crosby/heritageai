@@ -1,40 +1,78 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
 import storyRoutes from './routes/stories';
 import uploadRoutes from './routes/upload';
 import searchRoutes from './routes/search';
 import mediaRoutes from './routes/media';
+import authRoutes from './routes/auth';
+import userRoutes from './routes/users';
+import commentRoutes from './routes/comments';
+import processingRoutes from './routes/processing';
 import { errorHandler } from './middleware/errorHandler';
+import { generalLimiter } from './middleware/rateLimiter';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:8081',
-  credentials: true
+// ============================
+// Security Headers
+// ============================
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow Supabase storage URLs
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
+// ============================
+// CORS
+// ============================
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:8081').split(',');
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
+  credentials: true,
+}));
+
+// ============================
+// Body Parsing
+// ============================
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// ============================
+// Global Rate Limiting
+// ============================
+app.use(generalLimiter);
+
+// ============================
 // Routes
+// ============================
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/stories', storyRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/media', mediaRoutes);
+app.use('/api/comments', commentRoutes);
+app.use('/api/processing', processingRoutes);
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'HeritageAI API is running' });
+// Health check (excluded from rate limiting intentionally)
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', message: 'HeritageAI API is running', timestamp: new Date().toISOString() });
 });
 
-// Error handling middleware (must be last)
+// ============================
+// Error Handler (must be last)
+// ============================
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`🚀 HeritageAI Backend running on port ${PORT}`);
-  console.log(`📡 API available at http://localhost:${PORT}`);
+  console.log(`HeritageAI Backend running on port ${PORT}`);
+  console.log(`API available at http://localhost:${PORT}`);
 });

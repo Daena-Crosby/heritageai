@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase';
+import { supabaseAdmin as supabase } from '../config/supabase';
 
 export interface Storyteller {
   id?: string;
@@ -12,12 +12,16 @@ export interface Story {
   id?: string;
   title: string;
   storyteller_id?: string;
-  age_group?: string;
+  uploaded_by?: string;
+  age_group?: 'children' | 'teens' | 'general';
   country?: string;
   language?: string;
   theme?: string;
   length_seconds?: number;
+  is_published?: boolean;
+  view_count?: number;
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface Media {
@@ -127,11 +131,11 @@ export const getAllStories = async (filters?: {
     .order('created_at', { ascending: false });
 
   if (filters) {
-    if (filters.language) query = query.eq('language', filters.language);
-    if (filters.country) query = query.eq('country', filters.country);
+    if (filters.language) query = query.ilike('language', filters.language);
+    if (filters.country) query = query.ilike('country', filters.country);
     if (filters.storyteller_id) query = query.eq('storyteller_id', filters.storyteller_id);
-    if (filters.theme) query = query.eq('theme', filters.theme);
-    if (filters.age_group) query = query.eq('age_group', filters.age_group);
+    if (filters.theme) query = query.ilike('theme', `%${filters.theme}%`);
+    if (filters.age_group) query = query.ilike('age_group', filters.age_group);
   }
 
   const { data, error } = await query;
@@ -214,10 +218,10 @@ export const getIllustrationsByStory = async (storyId: string) => {
 export const createTag = async (tag: Tag) => {
   const { data, error } = await supabase
     .from('tags')
-    .insert([tag])
+    .insert([{ ...tag, name: tag.name.toLowerCase().trim() }])
     .select()
     .single();
-  
+
   if (error) throw error;
   return data;
 };
@@ -226,7 +230,7 @@ export const getTagByName = async (name: string) => {
   const { data, error } = await supabase
     .from('tags')
     .select('*')
-    .eq('name', name)
+    .ilike('name', name.toLowerCase().trim())
     .single();
   
   if (error && error.code !== 'PGRST116') throw error;

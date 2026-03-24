@@ -17,7 +17,7 @@ export const transcribeAudio = async (audioBuffer: Buffer): Promise<string> => {
     // Using Hugging Face's Whisper model
     const response = await hf.automaticSpeechRecognition({
       model: 'openai/whisper-base',
-      data: audioBuffer,
+      data: audioBuffer as unknown as Blob,
     });
     
     return response.text;
@@ -43,7 +43,8 @@ export const translateText = async (text: string, sourceLang: string = 'pcm', ta
       inputs: text,
     });
     
-    return response.translation_text || text;
+    const result = response as unknown as { translation_text?: string };
+    return result.translation_text || text;
   } catch (error) {
     console.error('Translation error:', error);
     // Fallback: return original text if translation fails
@@ -118,10 +119,7 @@ export const generateSubtitles = async (
     // Use Whisper with word-level timestamps
     const response = await hf.automaticSpeechRecognition({
       model: 'openai/whisper-base',
-      data: audioBuffer,
-      parameters: {
-        return_timestamps: true,
-      },
+      data: audioBuffer as unknown as Blob,
     });
 
     // Process timestamps and match with translated text
@@ -170,7 +168,11 @@ export const suggestThemes = async (text: string): Promise<string[]> => {
     });
 
     // Return top 3 themes
-    return response
+    const items = Array.isArray(response) ? response : [response];
+    return (items as Array<{ scores: number[]; labels: string[]; sequence: string }>)
+      .flatMap(item =>
+        item.labels.map((label, i) => ({ label, score: item.scores[i] }))
+      )
       .sort((a, b) => b.score - a.score)
       .slice(0, 3)
       .map(item => item.label);

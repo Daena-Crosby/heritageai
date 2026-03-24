@@ -1,56 +1,112 @@
+# ============================
+# Environment & Secrets — NEVER commit these
+# ============================
+.env
+.env.*
+!.env.example          # Allow example files (no real keys)
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+*.key
+*.p12
+*.p8
+*.jks
+*.mobileprovision
+secrets/
+credentials/
+
+# ============================
 # Dependencies
+# ============================
 node_modules/
 .pnp
 .pnp.js
+.yarn/
 
-# Testing
-coverage/
-
-# Production
+# ============================
+# Build Output
+# ============================
 build/
 dist/
+out/
+web-build/
+*.tsbuildinfo
 
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# ============================
+# Testing & Coverage
+# ============================
+coverage/
+.nyc_output/
 
+# ============================
+# Expo & React Native
+# ============================
+.expo/
+.expo-shared/
+*.orig.*
+android/
+ios/
+
+# ============================
 # Logs
+# ============================
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-# OS
+# ============================
+# OS Files
+# ============================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# IDE
+# ============================
+# IDE & Editor
+# ============================
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+*.sublime-workspace
+*.sublime-project
+.history/
 
-# Expo
-.expo/
-.expo-shared/
-web-build/
-
-# React Native
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-*.orig.*
-
-# TypeScript
-*.tsbuildinfo
-
-# Temporary files
+# ============================
+# Temporary / Cache Files
+# ============================
 *.tmp
 *.temp
 .cache/
+tmp/
+temp/
+
+# ============================
+# FFMPEG temp files (video generation)
+# ============================
+*.mp4.tmp
+/tmp/*.mp4
+/tmp/*.png
+
+# ============================
+# Supabase local dev
+# ============================
+supabase/.temp/
+supabase/config.toml
+
+# ============================
+# Legacy / root-level web app files
+# (kept in repo but not built)
+# ============================
+# vite build output already covered by dist/ above
+.claude/

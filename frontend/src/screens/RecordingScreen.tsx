@@ -114,9 +114,11 @@ export const RecordingScreen: React.FC<RecordingScreenProps> = ({ onBack }) => {
       } else {
         await uploadStoryText(storyText, metadata);
       }
-      Alert.alert('Archived!', 'Your story is being processed. Check the Heritage Vault shortly.', [
-        { text: 'OK', onPress: onBack },
-      ]);
+      Alert.alert(
+        'Submitted for Review',
+        'Your story has been received and is pending moderator approval. Once approved it will appear in the Heritage Vault.',
+        [{ text: 'OK', onPress: onBack }]
+      );
     } catch (error: any) {
       Alert.alert('Upload Failed', error.response?.data?.error || error.message || 'Something went wrong.');
     } finally {

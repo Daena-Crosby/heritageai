@@ -13,9 +13,13 @@ export const api = axios.create({
 // Types
 // ============================
 
+export type ModerationStatus = 'pending' | 'approved' | 'rejected';
+
 export interface Story {
   id: string;
   title: string;
+  moderation_status?: ModerationStatus;
+  moderation_note?: string;
   storyteller_id?: string;
   uploaded_by?: string;
   age_group?: 'children' | 'teens' | 'general';
@@ -209,6 +213,85 @@ export const getCulturalGuide = async (
 export const getProcessingStatus = async (storyId: string): Promise<ProcessingJob> => {
   const response = await api.get<ProcessingJob>(`/processing/${storyId}`);
   return response.data;
+};
+
+// ============================
+// Moderation (mod + admin)
+// ============================
+
+export const getModerationQueue = async (): Promise<Story[]> => {
+  const { data } = await api.get('/moderation/queue');
+  return data;
+};
+
+export const approveStory = async (id: string) => {
+  const { data } = await api.post(`/moderation/stories/${id}/approve`);
+  return data;
+};
+
+export const rejectStory = async (id: string, note?: string) => {
+  const { data } = await api.post(`/moderation/stories/${id}/reject`, { note });
+  return data;
+};
+
+export const getFlaggedComments = async () => {
+  const { data } = await api.get('/moderation/flagged-comments');
+  return data;
+};
+
+export const deleteModerationComment = async (id: string) => {
+  const { data } = await api.delete(`/moderation/comments/${id}`);
+  return data;
+};
+
+export const dismissCommentFlag = async (id: string) => {
+  const { data } = await api.post(`/moderation/comments/${id}/dismiss`);
+  return data;
+};
+
+// ============================
+// Admin
+// ============================
+
+export interface AdminUser {
+  id: string;
+  display_name?: string;
+  bio?: string;
+  role: 'user' | 'moderator' | 'admin';
+  created_at?: string;
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  totalStories: number;
+  pendingStories: number;
+  flaggedComments: number;
+  activeProcessingJobs: number;
+}
+
+export const getAdminUsers = async (): Promise<AdminUser[]> => {
+  const { data } = await api.get('/admin/users');
+  return data;
+};
+
+export const updateUserRole = async (userId: string, role: 'user' | 'moderator' | 'admin') => {
+  const { data } = await api.put(`/admin/users/${userId}/role`, { role });
+  return data;
+};
+
+export const deleteAdminUser = async (userId: string) => {
+  const { data } = await api.delete(`/admin/users/${userId}`);
+  return data;
+};
+
+export const getAdminStats = async (): Promise<AdminStats> => {
+  const { data } = await api.get('/admin/stats');
+  return data;
+};
+
+export const getAuditLog = async (limit = 50) => {
+  const { data } = await api.get('/admin/audit-log', { params: { limit } });
+  return data;
 };
 
 // ============================

@@ -9,27 +9,38 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 
-export type AppScreen = 'home' | 'dialects' | 'vault' | 'guide' | 'record';
+export type AppScreen = 'home' | 'dialects' | 'vault' | 'guide' | 'record' | 'moderation' | 'admin';
 
 interface SidebarProps {
   activeScreen: AppScreen;
   onNavigate: (screen: AppScreen) => void;
-  user: { id: string; email: string } | null;
+  user: { id: string; email: string; role?: string } | null;
   onSignIn?: () => void;
   onSignOut?: () => void;
 }
 
-const NAV_ITEMS: {
+type NavItem = {
   id: AppScreen;
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
   iconActive: keyof typeof Ionicons.glyphMap;
-}[] = [
-  { id: 'home', label: 'Home', icon: 'home-outline', iconActive: 'home' },
-  { id: 'dialects', label: 'Dialects', icon: 'language-outline', iconActive: 'language' },
-  { id: 'vault', label: 'Heritage Vault', icon: 'library-outline', iconActive: 'library' },
-  { id: 'guide', label: 'Cultural Guide', icon: 'compass-outline', iconActive: 'compass' },
+  minRole?: 'moderator' | 'admin'; // undefined = visible to all
+};
+
+const NAV_ITEMS: NavItem[] = [
+  { id: 'home',       label: 'Home',           icon: 'home-outline',      iconActive: 'home' },
+  { id: 'dialects',   label: 'Dialects',        icon: 'language-outline',  iconActive: 'language' },
+  { id: 'vault',      label: 'Heritage Vault',  icon: 'library-outline',   iconActive: 'library' },
+  { id: 'guide',      label: 'Cultural Guide',  icon: 'compass-outline',   iconActive: 'compass' },
+  { id: 'moderation', label: 'Moderation',      icon: 'shield-outline',    iconActive: 'shield',    minRole: 'moderator' },
+  { id: 'admin',      label: 'Admin Panel',     icon: 'settings-outline',  iconActive: 'settings',  minRole: 'admin' },
 ];
+
+const roleRank = (role?: string) => {
+  if (role === 'admin') return 3;
+  if (role === 'moderator') return 2;
+  return 1;
+};
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onNavigate, user, onSignIn, onSignOut }) => {
   const { colors: C, isDark, toggle } = useTheme();
@@ -37,6 +48,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onNavigate, user
   const isWide = width >= 600;
 
   const displayName = user?.email?.split('@')[0] || 'Sign In';
+  const userRank = roleRank(user?.role);
+  const visibleNav = NAV_ITEMS.filter(item =>
+    !item.minRole || userRank >= roleRank(item.minRole)
+  );
 
   return (
     <View
@@ -61,7 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onNavigate, user
 
       {/* Nav items */}
       <View style={styles.nav}>
-        {NAV_ITEMS.map((item) => {
+        {visibleNav.map((item) => {
           const isActive = activeScreen === item.id;
           return (
             <TouchableOpacity
@@ -158,7 +173,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onNavigate, user
               {displayName}
             </Text>
             <Text style={[styles.profileRole, { color: user ? C.orange : C.textMuted }]}>
-              {user ? 'TAP TO SIGN OUT' : 'TAP TO SIGN IN'}
+              {user
+                ? user.role
+                  ? user.role.toUpperCase()
+                  : 'MEMBER'
+                : 'TAP TO SIGN IN'}
             </Text>
           </View>
         )}

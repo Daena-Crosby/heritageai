@@ -12,6 +12,8 @@ import commentRoutes from './routes/comments';
 import processingRoutes from './routes/processing';
 import translateRoutes from './routes/translate';
 import guideRoutes from './routes/guide';
+import moderationRoutes from './routes/moderation';
+import adminRoutes from './routes/admin';
 import { errorHandler } from './middleware/errorHandler';
 import { generalLimiter } from './middleware/rateLimiter';
 
@@ -65,6 +67,8 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/processing', processingRoutes);
 app.use('/api/translate', translateRoutes);
 app.use('/api/guide', guideRoutes);
+app.use('/api/moderation', moderationRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check (excluded from rate limiting intentionally)
 app.get('/health', (_req, res) => {

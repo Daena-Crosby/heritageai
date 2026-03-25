@@ -50,10 +50,22 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
     return res.status(401).json({ error: 'Invalid credentials.' });
   }
 
+  // Fetch role from users table so frontend can gate screens immediately
+  const { data: profile } = await supabase
+    .from('users')
+    .select('role, display_name')
+    .eq('id', data.user!.id)
+    .single();
+
   res.json({
     token: data.session?.access_token,
     refreshToken: data.session?.refresh_token,
-    user: { id: data.user?.id, email: data.user?.email },
+    user: {
+      id: data.user?.id,
+      email: data.user?.email,
+      role: profile?.role ?? 'user',
+      display_name: profile?.display_name,
+    },
   });
 });
 

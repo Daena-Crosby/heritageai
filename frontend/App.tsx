@@ -22,6 +22,8 @@ import { CulturalGuideScreen } from './src/screens/CulturalGuideScreen';
 import { RecordingScreen } from './src/screens/RecordingScreen';
 import { StoryViewScreen } from './src/screens/StoryViewScreen';
 import { AuthScreen } from './src/screens/AuthScreen';
+import { ModerationScreen } from './src/screens/ModerationScreen';
+import { AdminScreen } from './src/screens/AdminScreen';
 import { getAccessToken, attachAuthInterceptor, getMyProfile, logout } from './src/services/auth';
 
 const SCREEN_LABELS: Record<AppScreen, string> = {
@@ -30,6 +32,8 @@ const SCREEN_LABELS: Record<AppScreen, string> = {
   vault: 'LIBRARY NAVIGATOR',
   guide: 'GUIDE NAVIGATOR',
   record: 'CONTRIBUTE NAVIGATOR',
+  moderation: 'MODERATION CENTER',
+  admin: 'ADMIN PANEL',
 };
 
 // Inner component — can safely call useTheme() since it sits inside ThemeProvider
@@ -38,7 +42,7 @@ function AppContent() {
   const insets = useSafeAreaInsets();
 
   const [authChecked, setAuthChecked] = useState(false);
-  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ id: string; email: string; role: 'user' | 'moderator' | 'admin' } | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [activeScreen, setActiveScreen] = useState<AppScreen>('home');
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
@@ -53,7 +57,11 @@ function AppContent() {
       const token = await getAccessToken();
       if (token) {
         const profile = await getMyProfile();
-        setUser({ id: profile.id, email: profile.display_name || profile.email || profile.id });
+        setUser({
+          id: profile.id,
+          email: profile.display_name || profile.email || profile.id,
+          role: profile.role ?? 'user',
+        });
       }
     } catch {
       // Expired / invalid — stay as guest
@@ -109,6 +117,10 @@ function AppContent() {
         return <CulturalGuideScreen />;
       case 'record':
         return <RecordingScreen onBack={() => handleNavigate('home')} />;
+      case 'moderation':
+        return <ModerationScreen />;
+      case 'admin':
+        return <AdminScreen currentUserId={user?.id ?? ''} />;
     }
   };
 

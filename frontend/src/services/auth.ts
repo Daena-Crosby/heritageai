@@ -24,6 +24,7 @@ const storage = {
 export interface AuthUser {
   id: string;
   email: string;
+  role: 'user' | 'moderator' | 'admin';
 }
 
 // Store tokens securely on device
@@ -76,7 +77,11 @@ export const attachAuthInterceptor = () => {
 export const login = async (email: string, password: string): Promise<AuthUser> => {
   const { data } = await api.post('/auth/login', { email, password });
   await saveTokens(data.token, data.refreshToken);
-  return data.user;
+  return {
+    id: data.user.id,
+    email: data.user.email,
+    role: data.user.role ?? 'user',
+  };
 };
 
 export const register = async (email: string, password: string, displayName?: string): Promise<AuthUser> => {

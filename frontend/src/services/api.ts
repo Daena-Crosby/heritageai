@@ -180,6 +180,29 @@ export const uploadStory = async (
 };
 
 // ============================
+// Dialect Translation
+// ============================
+
+export const translateDialect = async (
+  text: string,
+  sourceDialect: string
+): Promise<{ translation: string; sourceDialect: string }> => {
+  const response = await api.post('/translate', { text, sourceDialect });
+  return response.data;
+};
+
+// ============================
+// Cultural Guide
+// ============================
+
+export const getCulturalGuide = async (
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>
+): Promise<{ reply: string }> => {
+  const response = await api.post('/guide', { messages }, { timeout: 50000 });
+  return response.data;
+};
+
+// ============================
 // Processing Status
 // ============================
 

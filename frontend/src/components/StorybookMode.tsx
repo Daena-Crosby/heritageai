@@ -8,6 +8,7 @@ import {
   Dimensions,
   ScrollView,
 } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 import { Story, Illustration } from '../services/api';
 
 interface StorybookModeProps {
@@ -17,14 +18,15 @@ interface StorybookModeProps {
 const { width } = Dimensions.get('window');
 
 export const StorybookMode: React.FC<StorybookModeProps> = ({ story }) => {
+  const { colors: C } = useTheme();
   const [currentPage, setCurrentPage] = useState(0);
   const translation = story.translations?.[0];
   const illustrations = story.illustrations || [];
 
   if (!translation) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>No translation available</Text>
+      <View style={[styles.centerContainer, { backgroundColor: C.bg }]}>
+        <Text style={[styles.errorText, { color: C.textSub }]}>No translation available</Text>
       </View>
     );
   }
@@ -54,8 +56,8 @@ export const StorybookMode: React.FC<StorybookModeProps> = ({ story }) => {
 
   if (pages.length === 0) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>No content available</Text>
+      <View style={[styles.centerContainer, { backgroundColor: C.bg }]}>
+        <Text style={[styles.errorText, { color: C.textSub }]}>No content available</Text>
       </View>
     );
   }
@@ -63,40 +65,37 @@ export const StorybookMode: React.FC<StorybookModeProps> = ({ story }) => {
   const currentPageData = pages[currentPage];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: C.bg }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.page}>
           {currentPageData.illustration && (
             <Image
               source={{ uri: currentPageData.illustration }}
-              style={styles.illustration}
+              style={[styles.illustration, { backgroundColor: C.surfaceAlt }]}
               resizeMode="cover"
             />
           )}
-          <View style={styles.textContainer}>
-            <Text style={styles.pageText}>{currentPageData.text}</Text>
+          <View style={[styles.textContainer, { backgroundColor: C.surface, borderColor: C.border }]}>
+            <Text style={[styles.pageText, { color: C.text }]}>{currentPageData.text}</Text>
           </View>
         </View>
       </ScrollView>
 
-      <View style={styles.navigation}>
+      <View style={[styles.navigation, { backgroundColor: C.sidebar, borderTopColor: C.border }]}>
         <TouchableOpacity
-          style={[styles.navButton, currentPage === 0 && styles.navButtonDisabled]}
+          style={[styles.navButton, { backgroundColor: C.orange }, currentPage === 0 && { backgroundColor: C.surfaceAlt }]}
           onPress={goToPreviousPage}
           disabled={currentPage === 0}
         >
           <Text style={styles.navButtonText}>← Previous</Text>
         </TouchableOpacity>
 
-        <Text style={styles.pageIndicator}>
+        <Text style={[styles.pageIndicator, { color: C.textSub }]}>
           {currentPage + 1} / {pages.length}
         </Text>
 
         <TouchableOpacity
-          style={[
-            styles.navButton,
-            currentPage === pages.length - 1 && styles.navButtonDisabled,
-          ]}
+          style={[styles.navButton, { backgroundColor: C.orange }, currentPage === pages.length - 1 && { backgroundColor: C.surfaceAlt }]}
           onPress={goToNextPage}
           disabled={currentPage === pages.length - 1}
         >
@@ -110,7 +109,6 @@ export const StorybookMode: React.FC<StorybookModeProps> = ({ story }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF8E7',
   },
   scrollContent: {
     flexGrow: 1,
@@ -129,20 +127,18 @@ const styles = StyleSheet.create({
     height: (width - 40) * 0.75,
     borderRadius: 12,
     marginBottom: 20,
-    backgroundColor: '#F0F0F0',
   },
   textContainer: {
     flex: 1,
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#FFF',
     borderRadius: 12,
     minHeight: 200,
+    borderWidth: 1,
   },
   pageText: {
-    fontSize: 20,
-    lineHeight: 32,
-    color: '#333',
+    fontSize: 18,
+    lineHeight: 30,
     textAlign: 'center',
   },
   navigation: {
@@ -150,31 +146,23 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#FFF',
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
   },
   navButton: {
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: '#8B4513',
     borderRadius: 8,
-  },
-  navButtonDisabled: {
-    backgroundColor: '#CCC',
   },
   navButtonText: {
     color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '700',
   },
   pageIndicator: {
-    fontSize: 16,
-    color: '#666',
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '600',
   },
   errorText: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: 15,
   },
 });

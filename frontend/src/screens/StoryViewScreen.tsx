@@ -5,17 +5,20 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../theme/ThemeContext';
 import { getStory, Story } from '../services/api';
 import { StorybookMode } from '../components/StorybookMode';
 import { VideoMode } from '../components/VideoMode';
 
-export const StoryViewScreen: React.FC<{ route: any; navigation: any }> = ({
-  route,
-  navigation,
-}) => {
-  const { storyId } = route.params;
+interface StoryViewScreenProps {
+  storyId: string;
+  onBack: () => void;
+}
+
+export const StoryViewScreen: React.FC<StoryViewScreenProps> = ({ storyId, onBack }) => {
+  const { colors: C } = useTheme();
   const [story, setStory] = useState<Story | null>(null);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<'storybook' | 'video'>('storybook');
@@ -38,120 +41,98 @@ export const StoryViewScreen: React.FC<{ route: any; navigation: any }> = ({
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#8B4513" />
+      <View style={[styles.center, { backgroundColor: C.bg }]}>
+        <ActivityIndicator size="large" color={C.orange} />
       </View>
     );
   }
 
   if (!story) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Story not found</Text>
+      <View style={[styles.center, { backgroundColor: C.bg }]}>
+        <Ionicons name="alert-circle-outline" size={40} color={C.textMuted} />
+        <Text style={[styles.errorText, { color: C.textSub }]}>Story not found</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>← Back</Text>
+    <View style={[styles.container, { backgroundColor: C.bg }]}>
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: C.sidebar, borderBottomColor: C.border }]}>
+        <TouchableOpacity style={styles.backBtn} onPress={onBack}>
+          <Ionicons name="arrow-back" size={17} color={C.textSub} />
+          <Text style={[styles.backText, { color: C.textSub }]}>Back</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={2}>
+        <Text style={[styles.headerTitle, { color: C.text }]} numberOfLines={1}>
           {story.title}
         </Text>
+        <View style={{ width: 56 }} />
       </View>
 
-      <View style={styles.modeSelector}>
-        <TouchableOpacity
-          style={[styles.modeButton, mode === 'storybook' && styles.modeButtonActive]}
-          onPress={() => setMode('storybook')}
-        >
-          <Text
-            style={[
-              styles.modeButtonText,
-              mode === 'storybook' && styles.modeButtonTextActive,
-            ]}
+      {/* Mode selector */}
+      <View style={[styles.modeBar, { backgroundColor: C.sidebar, borderBottomColor: C.border }]}>
+        {(['storybook', 'video'] as const).map((m) => (
+          <TouchableOpacity
+            key={m}
+            style={[styles.modeTab, mode === m && { borderBottomColor: C.orange }]}
+            onPress={() => setMode(m)}
           >
-            📖 Storybook
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.modeButton, mode === 'video' && styles.modeButtonActive]}
-          onPress={() => setMode('video')}
-        >
-          <Text
-            style={[
-              styles.modeButtonText,
-              mode === 'video' && styles.modeButtonTextActive,
-            ]}
-          >
-            🎬 Video
-          </Text>
-        </TouchableOpacity>
+            <Ionicons
+              name={m === 'storybook' ? 'book-outline' : 'film-outline'}
+              size={15}
+              color={mode === m ? C.orange : C.textSub}
+            />
+            <Text
+              style={[
+                styles.modeTabText,
+                { color: mode === m ? C.orange : C.textSub },
+                mode === m && styles.modeTabTextActive,
+              ]}
+            >
+              {m === 'storybook' ? 'Storybook' : 'Video'}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      {mode === 'storybook' ? (
-        <StorybookMode story={story} />
-      ) : (
-        <VideoMode story={story} />
-      )}
+      {mode === 'storybook' ? <StorybookMode story={story} /> : <VideoMode story={story} />}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5DC',
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  container: { flex: 1 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
+  errorText: { fontSize: 15 },
   header: {
-    padding: 16,
-    paddingTop: 60,
-    backgroundColor: '#8B4513',
-  },
-  backButton: {
-    fontSize: 16,
-    color: '#F5E6D3',
-    marginBottom: 8,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
-  modeSelector: {
     flexDirection: 'row',
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  modeButton: {
-    flex: 1,
-    padding: 16,
     alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    paddingTop: 18,
+    borderBottomWidth: 1,
+  },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, width: 56 },
+  backText: { fontSize: 14 },
+  headerTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginHorizontal: 8,
+  },
+  modeBar: { flexDirection: 'row', borderBottomWidth: 1 },
+  modeTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
-  modeButtonActive: {
-    borderBottomColor: '#8B4513',
-  },
-  modeButtonText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  modeButtonTextActive: {
-    color: '#8B4513',
-    fontWeight: 'bold',
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#666',
-  },
+  modeTabText: { fontSize: 14 },
+  modeTabTextActive: { fontWeight: '600' },
 });

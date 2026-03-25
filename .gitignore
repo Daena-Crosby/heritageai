@@ -7,14 +7,62 @@
 **/.env
 **/.env.*
 !**/.env.example
+*.local                # .env.local, config.local, etc.
+
+# Certificates & keys
 *.pem
 *.key
 *.p12
 *.p8
+*.p8.enc
+*.pfx
 *.jks
+*.keystore             # Android release keystore
 *.mobileprovision
+
+# SSH keys (in case anyone puts them in the project)
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+id_dsa
+id_ecdsa
+
+# Generic secret files
+*.secret
+*.secrets
+*.token
+*.tokens
+*.password
+*.passwords
+*.credentials
+*.credential
+
+# Service account / cloud provider keys
+serviceAccountKey.json
+service-account*.json
+*-service-account.json
+google-services.json        # Firebase Android config (contains API keys)
+GoogleService-Info.plist    # Firebase iOS config (contains API keys)
+gcloud-key.json
+aws-credentials
+.aws/credentials
+
+# Package manager auth (may contain private registry tokens)
+.npmrc
+.yarnrc
+.yarn/
+
+# Supabase & auth exports
+supabase-key*.json
+auth-export*.json
+
+# Secrets and credential directories
 secrets/
 credentials/
+certs/
+keys/
+private/
 
 # ============================
 # Dependencies
@@ -103,6 +151,17 @@ temp/
 # ============================
 supabase/.temp/
 supabase/config.toml
+
+# ============================
+# Expo / EAS Build
+# ============================
+# eas.json can contain environment variables for builds — keep out of source
+# (only ignore if you put secrets in it; the base file is usually safe to commit)
+# eas-credentials.json — never commit
+eas-credentials.json
+.eas/
+# Expo private keys for OTA updates
+private-key.pem
 
 # ============================
 # Legacy / root-level web app files

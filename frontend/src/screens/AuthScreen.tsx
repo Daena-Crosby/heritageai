@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../theme/ThemeContext';
 import { login, register } from '../services/auth';
 
 interface AuthScreenProps {
@@ -18,6 +20,7 @@ interface AuthScreenProps {
 }
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onSkip }) => {
+  const { colors: C } = useTheme();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,7 +32,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onSkip })
   const handleSubmit = async () => {
     setError(null);
     setSuccessMsg(null);
-
     if (!email.trim() || !password.trim()) {
       setError('Email and password are required.');
       return;
@@ -38,7 +40,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onSkip })
       setError('Password must be at least 8 characters.');
       return;
     }
-
     setLoading(true);
     try {
       if (mode === 'login') {
@@ -46,13 +47,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onSkip })
         onAuthSuccess(user);
       } else {
         await register(email.trim(), password, displayName.trim() || undefined);
-        setSuccessMsg('Account created! Please check your email to verify, then sign in.');
+        setSuccessMsg('Account created! Please verify your email, then sign in.');
         setMode('login');
         setPassword('');
       }
     } catch (err: any) {
-      const msg = err?.response?.data?.error || err?.message || 'Something went wrong.';
-      setError(msg);
+      setError(err?.response?.data?.error || err?.message || 'Something went wrong.');
     } finally {
       setLoading(false);
     }
@@ -60,79 +60,105 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onSkip })
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: C.bg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
-          <Text style={styles.logo}>HeritageAI</Text>
-          <Text style={styles.tagline}>Preserving Jamaican Stories</Text>
+        <View style={styles.logoArea}>
+          <View style={[styles.logoIcon, { backgroundColor: C.surfaceAlt }]}>
+            <Ionicons name="flame" size={28} color={C.orange} />
+          </View>
+          <Text style={[styles.logoText, { color: C.text }]}>Heritage AI</Text>
+          <Text style={[styles.logoSub, { color: C.orange }]}>DIGITAL ARCHIVE</Text>
         </View>
 
-        <View style={styles.card}>
-          <View style={styles.tabs}>
-            <TouchableOpacity
-              style={[styles.tab, mode === 'login' && styles.tabActive]}
-              onPress={() => { setMode('login'); setError(null); setSuccessMsg(null); }}
-            >
-              <Text style={[styles.tabText, mode === 'login' && styles.tabTextActive]}>Sign In</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tab, mode === 'register' && styles.tabActive]}
-              onPress={() => { setMode('register'); setError(null); setSuccessMsg(null); }}
-            >
-              <Text style={[styles.tabText, mode === 'register' && styles.tabTextActive]}>Create Account</Text>
-            </TouchableOpacity>
+        <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.border }]}>
+          <View style={[styles.tabs, { borderBottomColor: C.border }]}>
+            {(['login', 'register'] as const).map((m) => (
+              <TouchableOpacity
+                key={m}
+                style={[styles.tab, mode === m && { borderBottomColor: C.orange }]}
+                onPress={() => { setMode(m); setError(null); setSuccessMsg(null); }}
+              >
+                <Text style={[styles.tabText, { color: mode === m ? C.orange : C.textSub }, mode === m && styles.tabTextActive]}>
+                  {m === 'login' ? 'Sign In' : 'Create Account'}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
 
           {mode === 'register' && (
-            <TextInput
-              style={styles.input}
-              placeholder="Display name (optional)"
-              value={displayName}
-              onChangeText={setDisplayName}
-              autoCapitalize="words"
-            />
+            <View style={[styles.inputWrapper, { backgroundColor: C.surfaceAlt, borderColor: C.border }]}>
+              <Ionicons name="person-outline" size={16} color={C.textMuted} style={styles.inputIcon} />
+              <TextInput
+                style={[styles.input, { color: C.text }]}
+                placeholder="Display name (optional)"
+                placeholderTextColor={C.textMuted}
+                value={displayName}
+                onChangeText={setDisplayName}
+                autoCapitalize="words"
+              />
+            </View>
           )}
 
-          <TextInput
-            style={styles.input}
-            placeholder="Email address"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+          <View style={[styles.inputWrapper, { backgroundColor: C.surfaceAlt, borderColor: C.border }]}>
+            <Ionicons name="mail-outline" size={16} color={C.textMuted} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, { color: C.text }]}
+              placeholder="Email address"
+              placeholderTextColor={C.textMuted}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Password (min. 8 characters)"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+          <View style={[styles.inputWrapper, { backgroundColor: C.surfaceAlt, borderColor: C.border }]}>
+            <Ionicons name="lock-closed-outline" size={16} color={C.textMuted} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, { color: C.text }]}
+              placeholder="Password (min. 8 characters)"
+              placeholderTextColor={C.textMuted}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
 
-          {error && <Text style={styles.errorText}>{error}</Text>}
-          {successMsg && <Text style={styles.successText}>{successMsg}</Text>}
+          {error && (
+            <View style={[styles.msgBox, { backgroundColor: `${C.error}15` }]}>
+              <Ionicons name="alert-circle-outline" size={14} color={C.error} />
+              <Text style={[styles.msgText, { color: C.error }]}>{error}</Text>
+            </View>
+          )}
+          {successMsg && (
+            <View style={[styles.msgBox, { backgroundColor: `${C.success}15` }]}>
+              <Ionicons name="checkmark-circle-outline" size={14} color={C.success} />
+              <Text style={[styles.msgText, { color: C.success }]}>{successMsg}</Text>
+            </View>
+          )}
 
           <TouchableOpacity
-            style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+            style={[styles.submitBtn, { backgroundColor: C.orange }, loading && styles.disabled]}
             onPress={handleSubmit}
             disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color="#FFF" />
             ) : (
-              <Text style={styles.submitButtonText}>
+              <Text style={styles.submitBtnText}>
                 {mode === 'login' ? 'Sign In' : 'Create Account'}
               </Text>
             )}
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.skipButton} onPress={onSkip}>
-          <Text style={styles.skipText}>Continue as guest — browse stories</Text>
+        <TouchableOpacity style={styles.skipBtn} onPress={onSkip}>
+          <Text style={[styles.skipText, { color: C.textSub }]}>
+            Continue as guest — browse stories
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -140,105 +166,45 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onSkip })
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5DC',
-  },
-  scroll: {
-    flexGrow: 1,
+  container: { flex: 1 },
+  scroll: { flexGrow: 1, justifyContent: 'center', padding: 24, gap: 20 },
+  logoArea: { alignItems: 'center', gap: 6 },
+  logoIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 16,
     justifyContent: 'center',
-    padding: 24,
-  },
-  header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 4,
   },
-  logo: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    color: '#8B4513',
-    marginBottom: 8,
-  },
-  tagline: {
-    fontSize: 16,
-    color: '#666',
-  },
-  card: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  tabs: {
-    flexDirection: 'row',
-    marginBottom: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
+  logoText: { fontSize: 26, fontWeight: 'bold' },
+  logoSub: { fontSize: 10, fontWeight: '700', letterSpacing: 2 },
+  card: { borderRadius: 16, padding: 22, borderWidth: 1, gap: 12 },
+  tabs: { flexDirection: 'row', borderBottomWidth: 1, marginBottom: 4 },
   tab: {
     flex: 1,
-    paddingBottom: 12,
+    paddingBottom: 13,
     alignItems: 'center',
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
+    marginBottom: -1,
   },
-  tabActive: {
-    borderBottomColor: '#8B4513',
-  },
-  tabText: {
-    fontSize: 15,
-    color: '#999',
-  },
-  tabTextActive: {
-    color: '#8B4513',
-    fontWeight: 'bold',
-  },
-  input: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    padding: 14,
-    fontSize: 16,
-    marginBottom: 12,
-  },
-  errorText: {
-    color: '#D32F2F',
-    fontSize: 14,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  successText: {
-    color: '#2E7D32',
-    fontSize: 14,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  submitButton: {
-    backgroundColor: '#8B4513',
-    borderRadius: 8,
-    padding: 16,
+  tabText: { fontSize: 14 },
+  tabTextActive: { fontWeight: '700' },
+  inputWrapper: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 13,
   },
-  submitButtonDisabled: {
-    opacity: 0.6,
-  },
-  submitButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  skipButton: {
-    marginTop: 24,
-    alignItems: 'center',
-    padding: 12,
-  },
-  skipText: {
-    color: '#8B4513',
-    fontSize: 14,
-    textDecorationLine: 'underline',
-  },
+  inputIcon: { marginRight: 10 },
+  input: { flex: 1, fontSize: 14, paddingVertical: 13 },
+  msgBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 8, padding: 10 },
+  msgText: { fontSize: 13, flex: 1 },
+  submitBtn: { borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 2 },
+  disabled: { opacity: 0.5 },
+  submitBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
+  skipBtn: { alignItems: 'center', paddingVertical: 10 },
+  skipText: { fontSize: 13, textDecorationLine: 'underline' },
 });

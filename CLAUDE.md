@@ -57,6 +57,14 @@ The allowed list in `routes/upload.ts` includes `audio/x-m4a` and `audio/aac` fo
 ### Input validation uses Zod
 All request bodies go through Zod schemas defined in `middleware/validate.ts`. Add new schemas there and use the `validate(schema)` middleware factory.
 
+### AI provider split — HuggingFace vs Groq
+Two separate AI providers are used:
+- **HuggingFace** (`HUGGINGFACE_API_TOKEN`): Whisper transcription, Stable Diffusion illustrations, BART theme classification. Uses `@huggingface/inference` SDK v2.x.
+- **Groq** (`GROQ_API_KEY`): Dialect translation and Cultural Guide chat. Uses direct axios calls to `https://api.groq.com/openai/v1/chat/completions` (OpenAI-compatible). Do NOT route these through the HuggingFace SDK — it uses the deprecated `api-inference.huggingface.co` URL internally.
+
+### Static StyleSheet + dynamic theme — never mix
+`StyleSheet.create()` runs at module load time, before any component mounts, so it cannot reference `useTheme()` values. All theme colors (`C.bg`, `C.text`, etc.) must be applied as **inline style props** in JSX, not inside `StyleSheet.create({})`.
+
 ## Environment Variables
 
 ### Backend (`backend/.env`)
@@ -65,6 +73,7 @@ SUPABASE_URL=                    # Project URL from Supabase → Settings → AP
 SUPABASE_ANON_KEY=               # anon/public key
 SUPABASE_SERVICE_ROLE_KEY=       # service_role key — NEVER expose to frontend
 HUGGINGFACE_API_TOKEN=           # from huggingface.co/settings/tokens
+GROQ_API_KEY=                    # from console.groq.com — used for translation + guide
 PORT=3000
 NODE_ENV=development
 CORS_ORIGIN=http://localhost:8081,http://<your-ip>:8081
@@ -102,6 +111,30 @@ Only set `EXPO_PUBLIC_API_URL` when deploying to production (e.g. `https://herit
 
 Text and document uploads skip steps 3, 5, and 8.
 
+## Screens & Navigation
+
+Navigation is **state-based** — no React Navigation or drawer navigator. `App.tsx` holds `activeScreen` state and renders the correct screen. This avoids the `react-native-reanimated` dependency.
+
+| Screen | `activeScreen` value | Component |
+|--------|----------------------|-----------|
+| Home | `'home'` | `HomeScreen` |
+| Dialect Translator | `'dialects'` | `DialectsScreen` |
+| Heritage Vault | `'vault'` | `HeritageVaultScreen` |
+| Cultural Guide | `'guide'` | `CulturalGuideScreen` |
+| Record Story | `'record'` | `RecordingScreen` |
+| Story Detail | — (overlay via `selectedStoryId`) | `StoryViewScreen` |
+
+The `AppScreen` type is exported from `frontend/src/components/Sidebar.tsx`.
+
+## Theme System
+
+The app supports **dark mode and light mode**, toggled by the user via the sidebar.
+
+- `frontend/src/theme/colors.ts` — defines `ThemeColors` interface, `darkColors`, `lightColors`
+- `frontend/src/theme/ThemeContext.tsx` — `ThemeProvider` + `useTheme()` hook
+- All components call `const { colors: C, isDark, toggle } = useTheme()`
+- `App.tsx` is wrapped in `<ThemeProvider>` at the root
+
 ## Common Issues & Fixes
 
 | Error | Cause | Fix |
@@ -113,6 +146,9 @@ Text and document uploads skip steps 3, 5, and 8.
 | `Cannot find module 'babel-preset-expo'` | Missing Babel preset | `cd frontend && npm install babel-preset-expo` then `npx expo start --clear` |
 | Stories not matching theme filter | Case mismatch ("Moral" vs "moral") | Already fixed — filters use `ilike`, saves normalize to lowercase |
 | `Could not find table 'stories'` | Schema not applied | Run `schema.sql` then `rls_policies.sql` in Supabase SQL Editor |
+| `api-inference.huggingface.co is no longer supported` | HuggingFace SDK v2.x uses deprecated URL | Do not use SDK for translation/guide — use Groq via direct axios calls instead |
+| `Property 'C' doesn't exist` (runtime crash) | `StyleSheet.create()` referenced `C.*` from `useTheme()` at module load time | Move all theme color values to inline JSX style props; keep `StyleSheet` for structural/static values only |
+| Translation or Guide returns "Not Found" | HuggingFace models not available on free tier | Already migrated to Groq — ensure `GROQ_API_KEY` is set in `backend/.env` |
 
 ## File Responsibilities
 
@@ -124,20 +160,30 @@ Text and document uploads skip steps 3, 5, and 8.
 | `backend/src/middleware/rateLimiter.ts` | 4 rate limit tiers |
 | `backend/src/middleware/validate.ts` | Zod schemas + `validate()` factory |
 | `backend/src/services/database.ts` | All Supabase table operations |
-| `backend/src/services/ai.ts` | Whisper, M2M100, Stable Diffusion, BART |
+| `backend/src/services/ai.ts` | Whisper + BART + Stable Diffusion (HF SDK); dialect translation + Cultural Guide (Groq/axios) |
 | `backend/src/services/storage.ts` | Supabase Storage upload helpers |
 | `backend/src/services/video.ts` | FFMPEG video assembly |
 | `backend/src/routes/upload.ts` | Audio, text, and document upload pipelines |
+| `backend/src/routes/translate.ts` | `POST /api/translate` — dialect → English via Groq |
+| `backend/src/routes/guide.ts` | `POST /api/guide` — Cultural Guide chat via Groq |
 | `backend/database/schema.sql` | Full PostgreSQL schema with triggers and indexes |
 | `backend/database/rls_policies.sql` | Row Level Security policies + auth trigger |
-| `frontend/src/services/api.ts` | Axios client + all API call functions |
+| `frontend/src/services/api.ts` | Axios client + all API call functions incl. `translateDialect()`, `getCulturalGuide()` |
 | `frontend/src/services/auth.ts` | Login/register/logout + SecureStore token management |
+| `frontend/src/theme/colors.ts` | Dark and light color palettes |
+| `frontend/src/theme/ThemeContext.tsx` | Theme context provider + `useTheme()` hook |
+| `frontend/src/components/Sidebar.tsx` | Left nav sidebar; exports `AppScreen` type |
+| `frontend/src/screens/HomeScreen.tsx` | Hero banner + recent stories + vault analytics |
+| `frontend/src/screens/DialectsScreen.tsx` | Dialect translator UI (calls `/api/translate`) |
+| `frontend/src/screens/HeritageVaultScreen.tsx` | Story library with theme filter tabs |
+| `frontend/src/screens/CulturalGuideScreen.tsx` | Conversational AI guide (calls `/api/guide`) |
 | `frontend/src/screens/RecordingScreen.tsx` | 3-tab story input (Audio / Document / Type) |
 | `frontend/src/components/VideoMode.tsx` | Video player with processing status polling |
 | `frontend/App.tsx` | Navigation + auth state management |
 
 ## Security Rules — Do Not Break
 - `SUPABASE_SERVICE_ROLE_KEY` must never be sent to the frontend or logged
+- `GROQ_API_KEY` must never be sent to the frontend or logged
 - All backend DB writes use `supabaseAdmin` (service role)
 - Auth routes use the anon client for Supabase Auth only
 - JWTs are stored in `expo-secure-store` (encrypted), not AsyncStorage

@@ -10,6 +10,8 @@ import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import commentRoutes from './routes/comments';
 import processingRoutes from './routes/processing';
+import translateRoutes from './routes/translate';
+import guideRoutes from './routes/guide';
 import { errorHandler } from './middleware/errorHandler';
 import { generalLimiter } from './middleware/rateLimiter';
 
@@ -61,6 +63,8 @@ app.use('/api/search', searchRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/processing', processingRoutes);
+app.use('/api/translate', translateRoutes);
+app.use('/api/guide', guideRoutes);
 
 // Health check (excluded from rate limiting intentionally)
 app.get('/health', (_req, res) => {

@@ -150,6 +150,108 @@ export const generateSubtitles = async (
   }
 };
 
+// Dialect-to-English translation using Groq (Llama 3)
+export const translateDialectText = async (
+  text: string,
+  sourceDialect: string
+): Promise<{ translation: string }> => {
+  const groqKey = process.env.GROQ_API_KEY;
+  if (!groqKey) {
+    return { translation: '[Translation requires GROQ_API_KEY to be set in backend/.env]' };
+  }
+
+  try {
+    const response = await axios.post(
+      'https://api.groq.com/openai/v1/chat/completions',
+      {
+        model: 'llama-3.1-8b-instant',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a dialect translation assistant specialising in Caribbean and West African creole languages. Translate the user's ${sourceDialect} text into clear, natural standard English. Output only the English translation — no explanations, no labels, no extra text.`,
+          },
+          { role: 'user', content: text },
+        ],
+        max_tokens: 400,
+        temperature: 0.2,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${groqKey}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      }
+    );
+
+    const translation = response.data?.choices?.[0]?.message?.content?.trim() ?? text;
+    return { translation };
+  } catch (error: any) {
+    console.error('Dialect translation error:', error?.response?.data || error.message);
+    const detail = error?.response?.data?.error?.message || error.message || 'Translation failed';
+    throw new Error(detail);
+  }
+};
+
+// Cultural Guide — conversational AI using HuggingFace Router chat completions
+const GUIDE_SYSTEM_PROMPT = `You are Heritage AI Guide — a conversational expert in Caribbean cultural anthropology, \
+Jamaican heritage, and African diaspora oral traditions. You have deep knowledge of:
+- Jamaican Patois (Patwa) etymology and its West African linguistic roots (Twi, Akan, Yoruba, Ashanti)
+- Caribbean folklore: Anansi the spider trickster, duppy spirits, and oral storytelling traditions
+- How enslaved Africans preserved language and culture across the Caribbean and Americas
+- Trinidadian Creole, Haitian Kreyòl, Nigerian Pidgin, and Louisiana Creole cultures
+- The historical connections between West Africa, Jamaica, and the wider African diaspora
+
+Guidelines:
+- Be knowledgeable, warm, and respectful of cultural heritage
+- Keep responses concise — 2 to 3 paragraphs maximum
+- If you are unsure of a fact, say so rather than inventing one
+- Speak naturally and conversationally, not like a textbook`;
+
+export interface GuideMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export const getCulturalGuideResponse = async (
+  messages: GuideMessage[]
+): Promise<string> => {
+  const groqKey = process.env.GROQ_API_KEY;
+  if (!groqKey) {
+    throw new Error('GROQ_API_KEY is not configured in backend/.env');
+  }
+
+  try {
+    const response = await axios.post(
+      'https://api.groq.com/openai/v1/chat/completions',
+      {
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: GUIDE_SYSTEM_PROMPT },
+          ...messages.map((m) => ({ role: m.role, content: m.content })),
+        ],
+        max_tokens: 512,
+        temperature: 0.7,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${groqKey}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      }
+    );
+
+    const reply: string = response.data?.choices?.[0]?.message?.content?.trim();
+    if (!reply) throw new Error('Empty response from model');
+    return reply;
+  } catch (error: any) {
+    console.error('Cultural Guide error:', error?.response?.data || error.message);
+    const detail = error?.response?.data?.error?.message || error.message || 'Guide unavailable';
+    throw new Error(detail);
+  }
+};
+
 // Suggest themes using zero-shot classification
 export const suggestThemes = async (text: string): Promise<string[]> => {
   if (!hf) {

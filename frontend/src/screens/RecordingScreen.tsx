@@ -8,14 +8,21 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  useWindowDimensions,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import * as DocumentPicker from 'expo-document-picker';
+import { useTheme } from '../theme/ThemeContext';
 import { uploadStory, uploadStoryText, uploadStoryDocument } from '../services/api';
 
-type InputTab = 'audio' | 'document' | 'text';
+const CATEGORIES = ['Folklore', 'Moral', 'History', 'Personal Story', 'Ancestral Wisdom', 'Tradition', 'Legend', 'Fable', 'Anansi'];
 
-const DEFAULT_METADATA = {
+interface RecordingScreenProps {
+  onBack: () => void;
+}
+
+const DEFAULT_META = {
   title: '',
   storytellerName: '',
   storytellerLocation: '',
@@ -26,25 +33,21 @@ const DEFAULT_METADATA = {
   theme: '',
 };
 
-export const RecordingScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
-  const [tab, setTab] = useState<InputTab>('audio');
-  const [metadata, setMetadata] = useState(DEFAULT_METADATA);
+export const RecordingScreen: React.FC<RecordingScreenProps> = ({ onBack }) => {
+  const { colors: C } = useTheme();
+  const [metadata, setMetadata] = useState(DEFAULT_META);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [storyText, setStoryText] = useState('');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
-  // Audio state
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [audioUri, setAudioUri] = useState<string | null>(null);
-
-  // Document state
   const [docFile, setDocFile] = useState<{ uri: string; name: string; mimeType: string } | null>(null);
 
-  // Text state
-  const [storyText, setStoryText] = useState('');
+  const { width } = useWindowDimensions();
+  const isWide = width >= 768;
 
-  // ============================
-  // Audio recording
-  // ============================
   const startRecording = async () => {
     try {
       const { granted } = await Audio.requestPermissionsAsync();
@@ -58,7 +61,7 @@ export const RecordingScreen: React.FC<{ navigation: any }> = ({ navigation }) =
       );
       setRecording(rec);
       setIsRecording(true);
-    } catch (err) {
+    } catch {
       Alert.alert('Error', 'Failed to start recording');
     }
   };
@@ -72,81 +75,47 @@ export const RecordingScreen: React.FC<{ navigation: any }> = ({ navigation }) =
     setRecording(null);
   };
 
-  const pickAudioFile = async () => {
+  const pickMediaFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: 'audio/*',
-        copyToCacheDirectory: true,
-      });
-      if (!result.canceled && result.assets[0]) {
-        setAudioUri(result.assets[0].uri);
-      }
-    } catch {
-      Alert.alert('Error', 'Failed to pick audio file');
-    }
-  };
-
-  // ============================
-  // Document picker
-  // ============================
-  const pickDocument = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: [
-          'text/plain',
+        type: ['audio/*', 'text/plain',
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'application/msword',
-        ],
+          'application/msword'],
         copyToCacheDirectory: true,
       });
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
-        setDocFile({
-          uri: asset.uri,
-          name: asset.name,
-          mimeType: asset.mimeType || 'text/plain',
-        });
+        if (asset.mimeType?.startsWith('audio/')) {
+          setAudioUri(asset.uri);
+        } else {
+          setDocFile({ uri: asset.uri, name: asset.name, mimeType: asset.mimeType || 'text/plain' });
+        }
       }
     } catch {
-      Alert.alert('Error', 'Failed to pick document');
+      Alert.alert('Error', 'Failed to pick file');
     }
   };
 
-  // ============================
-  // Submit
-  // ============================
   const handleSubmit = async () => {
     if (!metadata.title.trim()) {
-      Alert.alert('Required', 'Please enter a story title.');
+      Alert.alert('Required', 'Please enter an artifact title.');
       return;
     }
-
-    if (tab === 'audio' && !audioUri) {
-      Alert.alert('Required', 'Please record or select an audio file.');
+    if (!audioUri && !docFile && storyText.trim().length < 10) {
+      Alert.alert('Required', 'Please record audio, upload a file, or enter at least 10 characters of story text.');
       return;
     }
-    if (tab === 'document' && !docFile) {
-      Alert.alert('Required', 'Please select a document file.');
-      return;
-    }
-    if (tab === 'text' && storyText.trim().length < 10) {
-      Alert.alert('Required', 'Please enter at least 10 characters of story text.');
-      return;
-    }
-
     try {
       setIsProcessing(true);
-
-      if (tab === 'audio') {
-        await uploadStory(audioUri!, metadata);
-      } else if (tab === 'document') {
-        await uploadStoryDocument(docFile!.uri, docFile!.name, docFile!.mimeType, metadata);
+      if (audioUri) {
+        await uploadStory(audioUri, metadata);
+      } else if (docFile) {
+        await uploadStoryDocument(docFile.uri, docFile.name, docFile.mimeType, metadata);
       } else {
         await uploadStoryText(storyText, metadata);
       }
-
-      Alert.alert('Success!', 'Your story is being processed. Check back shortly for illustrations and translation.', [
-        { text: 'OK', onPress: () => navigation.navigate('Home') },
+      Alert.alert('Archived!', 'Your story is being processed. Check the Heritage Vault shortly.', [
+        { text: 'OK', onPress: onBack },
       ]);
     } catch (error: any) {
       Alert.alert('Upload Failed', error.response?.data?.error || error.message || 'Something went wrong.');
@@ -155,271 +124,293 @@ export const RecordingScreen: React.FC<{ navigation: any }> = ({ navigation }) =
     }
   };
 
-  const meta = (field: keyof typeof metadata) => ({
-    value: metadata[field],
-    onChangeText: (text: string) => setMetadata({ ...metadata, [field]: text }),
-    editable: !isProcessing,
-    style: styles.input,
-  });
+  const setField = (field: keyof typeof metadata) => (text: string) =>
+    setMetadata((prev) => ({ ...prev, [field]: text }));
+
+  const selectedCategory = metadata.theme
+    ? metadata.theme.charAt(0).toUpperCase() + metadata.theme.slice(1)
+    : 'Folklore';
 
   return (
-    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Add New Story</Text>
+    <ScrollView
+      style={[styles.container, { backgroundColor: C.bg }]}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.pageHeader}>
+        <Text style={[styles.pageTitle, { color: C.text }]}>Global Command Center</Text>
+        <Text style={[styles.pageSubtitle, { color: C.textSub }]}>
+          Record and archive heritage using our multi-threaded synthesis engine.
+        </Text>
       </View>
 
-      {/* Input type tabs */}
-      <View style={styles.tabs}>
-        {(['audio', 'document', 'text'] as InputTab[]).map((t) => (
-          <TouchableOpacity
-            key={t}
-            style={[styles.tab, tab === t && styles.tabActive]}
-            onPress={() => setTab(t)}
-            disabled={isProcessing}
-          >
-            <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-              {t === 'audio' ? '🎤 Audio' : t === 'document' ? '📄 Document' : '✏️ Type Story'}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <View style={styles.content}>
-
-        {/* ====== AUDIO TAB ====== */}
-        {tab === 'audio' && (
-          <View style={styles.inputSection}>
-            <Text style={styles.sectionTitle}>Audio Recording</Text>
-            <Text style={styles.hint}>Record your voice or upload an audio file (mp3, m4a, wav, ogg)</Text>
-
-            {!audioUri ? (
-              <>
-                <TouchableOpacity
-                  style={[styles.button, isRecording ? styles.stopButton : styles.recordButton]}
-                  onPress={isRecording ? stopRecording : startRecording}
-                  disabled={isProcessing}
-                >
-                  <Text style={styles.buttonText}>
-                    {isRecording ? '⏹  Stop Recording' : '🎤  Start Recording'}
-                  </Text>
-                </TouchableOpacity>
-                <Text style={styles.orText}>— OR —</Text>
-                <TouchableOpacity
-                  style={[styles.button, styles.secondaryButton]}
-                  onPress={pickAudioFile}
-                  disabled={isProcessing}
-                >
-                  <Text style={styles.buttonText}>📁  Upload Audio File</Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <View style={styles.selectedFile}>
-                <Text style={styles.selectedFileText}>✓  Audio ready</Text>
-                <TouchableOpacity onPress={() => setAudioUri(null)}>
-                  <Text style={styles.changeText}>Change</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* ====== DOCUMENT TAB ====== */}
-        {tab === 'document' && (
-          <View style={styles.inputSection}>
-            <Text style={styles.sectionTitle}>Upload Document</Text>
-            <Text style={styles.hint}>Supported formats: .txt, .doc, .docx (max 10MB)</Text>
-
-            {!docFile ? (
-              <TouchableOpacity
-                style={[styles.button, styles.secondaryButton]}
-                onPress={pickDocument}
-                disabled={isProcessing}
-              >
-                <Text style={styles.buttonText}>📄  Choose File</Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.selectedFile}>
-                <Text style={styles.selectedFileText} numberOfLines={1}>✓  {docFile.name}</Text>
-                <TouchableOpacity onPress={() => setDocFile(null)}>
-                  <Text style={styles.changeText}>Change</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* ====== TEXT TAB ====== */}
-        {tab === 'text' && (
-          <View style={styles.inputSection}>
-            <Text style={styles.sectionTitle}>Type Your Story</Text>
-            <Text style={styles.hint}>Write or paste the full story text below</Text>
+      <View style={[styles.columns, !isWide && styles.columnsStack]}>
+        {/* Left column */}
+        <View style={[styles.colMain, !isWide && styles.colFull]}>
+          {/* Archive metadata */}
+          <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.border }]}>
+            <Text style={[styles.cardLabel, { color: C.textMuted }]}>ARCHIVE METADATA</Text>
             <TextInput
-              style={styles.storyTextInput}
-              placeholder="Once upon a time in Jamaica..."
+              style={[styles.input, { backgroundColor: C.surfaceAlt, borderColor: C.border, color: C.text }]}
+              placeholder="Artifact Title *"
+              placeholderTextColor={C.textMuted}
+              value={metadata.title}
+              onChangeText={setField('title')}
+              editable={!isProcessing}
+            />
+            <TextInput
+              style={[styles.input, { backgroundColor: C.surfaceAlt, borderColor: C.border, color: C.text }]}
+              placeholder="Storyteller Name (optional)"
+              placeholderTextColor={C.textMuted}
+              value={metadata.storytellerName}
+              onChangeText={setField('storytellerName')}
+              editable={!isProcessing}
+            />
+            <TextInput
+              style={[styles.input, { backgroundColor: C.surfaceAlt, borderColor: C.border, color: C.text }]}
+              placeholder="Location (e.g., Kingston, Jamaica)"
+              placeholderTextColor={C.textMuted}
+              value={metadata.storytellerLocation}
+              onChangeText={setField('storytellerLocation')}
+              editable={!isProcessing}
+            />
+          </View>
+
+          {/* Oral & written record */}
+          <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.border }]}>
+            <Text style={[styles.cardLabel, { color: C.textMuted }]}>ORAL & WRITTEN RECORD</Text>
+            <TouchableOpacity
+              style={[
+                styles.recordBtn,
+                { backgroundColor: isRecording ? '#B52A2A' : C.orangeBtn },
+              ]}
+              onPress={isRecording ? stopRecording : startRecording}
+              disabled={isProcessing}
+            >
+              <Ionicons name={isRecording ? 'stop-circle' : 'mic'} size={18} color="#FFF" />
+              <Text style={styles.recordBtnText}>
+                {audioUri
+                  ? '✓  Audio Recorded'
+                  : isRecording
+                  ? 'STOP RECORDING'
+                  : 'START ORAL RECORD'}
+              </Text>
+            </TouchableOpacity>
+            <TextInput
+              style={[
+                styles.textArea,
+                { backgroundColor: C.surfaceAlt, borderColor: C.border, color: C.text },
+              ]}
+              placeholder="Type the story context or manually transcribe here..."
+              placeholderTextColor={C.textMuted}
               value={storyText}
               onChangeText={setStoryText}
               multiline
-              numberOfLines={12}
               textAlignVertical="top"
               editable={!isProcessing}
               maxLength={50000}
             />
-            <Text style={styles.charCount}>{storyText.length} / 50,000 characters</Text>
+            {storyText.length > 0 && (
+              <Text style={[styles.charCount, { color: C.textMuted }]}>
+                {storyText.length} / 50,000
+              </Text>
+            )}
           </View>
-        )}
 
-        {/* ====== STORY INFO (shared) ====== */}
-        <Text style={styles.sectionTitle}>Story Information</Text>
-
-        <TextInput placeholder="Story Title *" {...meta('title')} />
-        <TextInput placeholder="Storyteller Name" {...meta('storytellerName')} />
-        <TextInput placeholder="Location (e.g., Kingston, Jamaica)" {...meta('storytellerLocation')} />
-
-        {tab === 'audio' && (
-          <TextInput placeholder="Dialect (e.g., Jamaican Patois)" {...meta('storytellerDialect')} />
-        )}
-
-        <Text style={styles.fieldLabel}>Age Group</Text>
-        <View style={styles.chipRow}>
-          {['children', 'teens', 'general'].map((ag) => (
+          {/* Supplementary artifacts */}
+          <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.border }]}>
+            <Text style={[styles.cardLabel, { color: C.textMuted }]}>SUPPLEMENTARY ARTIFACTS</Text>
             <TouchableOpacity
-              key={ag}
-              style={[styles.chip, metadata.ageGroup === ag && styles.chipActive]}
-              onPress={() => setMetadata({ ...metadata, ageGroup: metadata.ageGroup === ag ? '' : ag })}
+              style={[styles.uploadArea, { backgroundColor: C.surfaceAlt, borderColor: C.border }]}
+              onPress={pickMediaFile}
               disabled={isProcessing}
             >
-              <Text style={[styles.chipText, metadata.ageGroup === ag && styles.chipTextActive]}>
-                {ag.charAt(0).toUpperCase() + ag.slice(1)}
-              </Text>
+              {docFile || (audioUri && !isRecording) ? (
+                <View style={styles.uploadedRow}>
+                  <Ionicons name="checkmark-circle" size={20} color={C.success} />
+                  <Text style={[styles.uploadedName, { color: C.text }]} numberOfLines={1}>
+                    {docFile?.name ?? 'Audio file ready'}
+                  </Text>
+                  <TouchableOpacity onPress={() => { setDocFile(null); setAudioUri(null); }}>
+                    <Ionicons name="close-circle" size={17} color={C.textMuted} />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <>
+                  <Ionicons name="cloud-upload-outline" size={28} color={C.textMuted} />
+                  <Text style={[styles.uploadText, { color: C.textSub }]}>
+                    Upload media (AI analyzes in background)
+                  </Text>
+                  <Text style={[styles.uploadHint, { color: C.textMuted }]}>
+                    Audio, .txt, .doc, .docx
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
-          ))}
+          </View>
         </View>
 
-        <TextInput placeholder="Language (e.g., Jamaican Patois, English)" {...meta('language')} />
-        <TextInput placeholder="Theme (e.g., folklore, anansi, moral)" {...meta('theme')} />
-        <TextInput placeholder="Country" {...meta('country')} />
+        {/* Right column */}
+        <View style={[styles.colSide, !isWide && styles.colFull]}>
+          <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.border }]}>
+            <Text style={[styles.cardLabel, { color: C.textMuted }]}>GLOBAL CLASSIFICATION</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: C.surfaceAlt, borderColor: C.border, color: C.text }]}
+              placeholder="Cultural Origin (e.g., Jamaican)"
+              placeholderTextColor={C.textMuted}
+              value={metadata.country}
+              onChangeText={setField('country')}
+              editable={!isProcessing}
+            />
+            <TextInput
+              style={[styles.input, { backgroundColor: C.surfaceAlt, borderColor: C.border, color: C.text }]}
+              placeholder="Archive Origin (region / community)"
+              placeholderTextColor={C.textMuted}
+              value={metadata.storytellerLocation}
+              onChangeText={setField('storytellerLocation')}
+              editable={!isProcessing}
+            />
 
-        <TouchableOpacity
-          style={[styles.button, styles.submitButton, isProcessing && styles.disabledButton]}
-          onPress={handleSubmit}
-          disabled={isProcessing}
-        >
-          {isProcessing ? (
-            <View style={styles.processingRow}>
-              <ActivityIndicator color="#FFF" />
-              <Text style={[styles.buttonText, { marginLeft: 10 }]}>Processing...</Text>
+            {/* Category dropdown */}
+            <View style={{ zIndex: 10 }}>
+              <TouchableOpacity
+                style={[styles.categoryBtn, { backgroundColor: C.surfaceAlt, borderColor: C.border }]}
+                onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                disabled={isProcessing}
+              >
+                <Text style={[styles.categoryBtnText, { color: C.text }]}>{selectedCategory}</Text>
+                <Ionicons name="chevron-down" size={14} color={C.textSub} />
+              </TouchableOpacity>
+              {showCategoryDropdown && (
+                <View style={[styles.dropdown, { backgroundColor: C.surface, borderColor: C.border }]}>
+                  {CATEGORIES.map((cat) => (
+                    <TouchableOpacity
+                      key={cat}
+                      style={[
+                        styles.dropdownItem,
+                        cat.toLowerCase() === metadata.theme && { backgroundColor: C.activeNav },
+                      ]}
+                      onPress={() => {
+                        setMetadata((prev) => ({ ...prev, theme: cat.toLowerCase() }));
+                        setShowCategoryDropdown(false);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.dropdownItemText,
+                          { color: cat.toLowerCase() === metadata.theme ? C.text : C.textSub },
+                        ]}
+                      >
+                        {cat}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
-          ) : (
-            <Text style={styles.buttonText}>
-              {tab === 'audio' ? '🚀  Upload & Process Story' :
-               tab === 'document' ? '🚀  Process Document' :
-               '🚀  Save & Illustrate Story'}
-            </Text>
-          )}
-        </TouchableOpacity>
 
-        <Text style={styles.processingNote}>
-          AI processing takes 1-3 minutes. Illustrations and translation will be generated automatically.
-        </Text>
+            <TouchableOpacity
+              style={[styles.submitBtn, { backgroundColor: C.orange }, isProcessing && styles.disabled]}
+              onPress={handleSubmit}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.submitBtnText}>Optimized Preservation</Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.statusBadge}>
+              <View style={[styles.statusDot, { backgroundColor: C.success }]} />
+              <Text style={[styles.statusText, { color: C.textMuted }]}>
+                MULTI-THREADED ARCHIVAL ACTIVE
+              </Text>
+            </View>
+          </View>
+
+          <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.border }]}>
+            <Text style={[styles.cardLabel, { color: C.textMuted }]}>DIALECT</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: C.surfaceAlt, borderColor: C.border, color: C.text }]}
+              placeholder="e.g., Jamaican Patois"
+              placeholderTextColor={C.textMuted}
+              value={metadata.storytellerDialect}
+              onChangeText={setField('storytellerDialect')}
+              editable={!isProcessing}
+            />
+          </View>
+        </View>
       </View>
     </ScrollView>
   );
 };
 
-const BROWN = '#8B4513';
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5DC' },
-  header: { padding: 16, paddingTop: 60, backgroundColor: BROWN },
-  backButton: { fontSize: 16, color: '#F5E6D3', marginBottom: 8 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#FFF' },
-  tabs: {
-    flexDirection: 'row',
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabActive: { borderBottomColor: BROWN },
-  tabText: { fontSize: 13, color: '#888' },
-  tabTextActive: { color: BROWN, fontWeight: 'bold' },
-  content: { padding: 16 },
-  inputSection: { marginBottom: 8 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#333', marginTop: 20, marginBottom: 6 },
-  hint: { fontSize: 13, color: '#888', marginBottom: 14 },
-  button: {
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginVertical: 6,
-  },
-  recordButton: { backgroundColor: BROWN },
-  stopButton: { backgroundColor: '#DC143C' },
-  secondaryButton: { backgroundColor: '#4A90E2' },
-  submitButton: { backgroundColor: BROWN, marginTop: 28 },
-  disabledButton: { opacity: 0.6 },
-  buttonText: { color: '#FFF', fontSize: 15, fontWeight: 'bold' },
-  processingRow: { flexDirection: 'row', alignItems: 'center' },
-  orText: { textAlign: 'center', color: '#999', marginVertical: 10, fontSize: 13 },
-  selectedFile: {
+  container: { flex: 1 },
+  content: { padding: 22, paddingBottom: 40, gap: 18 },
+  pageHeader: { gap: 5, marginBottom: 2 },
+  pageTitle: { fontSize: 26, fontWeight: 'bold' },
+  pageSubtitle: { fontSize: 13, lineHeight: 20 },
+  columns: { flexDirection: 'row', gap: 18, alignItems: 'flex-start' },
+  columnsStack: { flexDirection: 'column' },
+  colMain: { flex: 1.4, gap: 14 },
+  colSide: { flex: 1, gap: 14 },
+  colFull: { flex: undefined, width: '100%' },
+  card: { borderRadius: 14, padding: 16, gap: 11, borderWidth: 1 },
+  cardLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.5, marginBottom: 2 },
+  input: { borderRadius: 10, paddingHorizontal: 13, paddingVertical: 11, fontSize: 14, borderWidth: 1 },
+  recordBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    borderRadius: 12,
+    paddingVertical: 15,
+  },
+  recordBtnText: { color: '#FFF', fontWeight: '700', fontSize: 13, letterSpacing: 0.5 },
+  textArea: { borderRadius: 10, paddingHorizontal: 13, paddingVertical: 11, fontSize: 14, minHeight: 100, borderWidth: 1 },
+  charCount: { fontSize: 11, textAlign: 'right', marginTop: -4 },
+  uploadArea: {
+    borderRadius: 10,
+    padding: 22,
+    alignItems: 'center',
+    gap: 7,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+  },
+  uploadText: { fontSize: 13, textAlign: 'center' },
+  uploadHint: { fontSize: 11 },
+  uploadedRow: { flexDirection: 'row', alignItems: 'center', gap: 9, width: '100%' },
+  uploadedName: { flex: 1, fontSize: 13 },
+  categoryBtn: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 14,
-    backgroundColor: '#E8F5E9',
-    borderRadius: 8,
-    marginVertical: 6,
-  },
-  selectedFileText: { color: '#2E7D32', fontSize: 15, flex: 1, marginRight: 10 },
-  changeText: { color: BROWN, fontSize: 14, fontWeight: '600' },
-  storyTextInput: {
-    backgroundColor: '#FFF',
-    borderRadius: 8,
-    padding: 14,
-    fontSize: 15,
+    alignItems: 'center',
+    borderRadius: 10,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    minHeight: 220,
-    lineHeight: 22,
   },
-  charCount: { fontSize: 12, color: '#AAA', textAlign: 'right', marginTop: 4, marginBottom: 8 },
-  input: {
-    backgroundColor: '#FFF',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 15,
-    marginBottom: 10,
+  categoryBtnText: { fontSize: 14 },
+  dropdown: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    marginTop: 4,
+    overflow: 'hidden',
+    elevation: 10,
+    zIndex: 20,
   },
-  fieldLabel: { fontSize: 14, color: '#555', marginBottom: 8, marginTop: 4 },
-  chipRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
-  chip: {
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#F0E8E0',
-    borderWidth: 1,
-    borderColor: '#D0B090',
-  },
-  chipActive: { backgroundColor: BROWN, borderColor: BROWN },
-  chipText: { color: '#666', fontSize: 14 },
-  chipTextActive: { color: '#FFF', fontWeight: 'bold' },
-  processingNote: {
-    fontSize: 12,
-    color: '#999',
-    textAlign: 'center',
-    marginTop: 12,
-    marginBottom: 30,
-    lineHeight: 18,
-  },
+  dropdownItem: { paddingHorizontal: 13, paddingVertical: 10 },
+  dropdownItemText: { fontSize: 14 },
+  submitBtn: { borderRadius: 12, paddingVertical: 13, alignItems: 'center', marginTop: 2 },
+  disabled: { opacity: 0.5 },
+  submitBtnText: { color: '#FFF', fontWeight: '700', fontSize: 15 },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  statusDot: { width: 7, height: 7, borderRadius: 4 },
+  statusText: { fontSize: 9, fontWeight: '700', letterSpacing: 1 },
 });

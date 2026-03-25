@@ -1,3 +1,4 @@
+<div align="center">
   <h1>Heritage AI</h1>
   <p><strong>A living archive for the voices, stories, and dialects of the African diaspora.</strong></p>
 

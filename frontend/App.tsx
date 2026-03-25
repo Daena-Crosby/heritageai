@@ -24,6 +24,7 @@ import { StoryViewScreen } from './src/screens/StoryViewScreen';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { ModerationScreen } from './src/screens/ModerationScreen';
 import { AdminScreen } from './src/screens/AdminScreen';
+import { ProfileScreen } from './src/screens/ProfileScreen';
 import { getAccessToken, attachAuthInterceptor, getMyProfile, logout } from './src/services/auth';
 
 const SCREEN_LABELS: Record<AppScreen, string> = {
@@ -34,6 +35,7 @@ const SCREEN_LABELS: Record<AppScreen, string> = {
   record: 'CONTRIBUTE NAVIGATOR',
   moderation: 'MODERATION CENTER',
   admin: 'ADMIN PANEL',
+  profile: 'MY PROFILE',
 };
 
 // Inner component — can safely call useTheme() since it sits inside ThemeProvider
@@ -86,6 +88,7 @@ function AppContent() {
         onPress: async () => {
           await logout();
           setUser(null);
+          setActiveScreen('home');
         },
       },
     ]);
@@ -121,6 +124,15 @@ function AppContent() {
         return <ModerationScreen />;
       case 'admin':
         return <AdminScreen currentUserId={user?.id ?? ''} />;
+      case 'profile':
+        return (
+          <ProfileScreen
+            userId={user?.id ?? ''}
+            userEmail={user?.email}
+            onSignOut={handleSignOut}
+            onStorySelect={setSelectedStoryId}
+          />
+        );
     }
   };
 

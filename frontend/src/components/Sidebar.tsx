@@ -9,7 +9,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 
-export type AppScreen = 'home' | 'dialects' | 'vault' | 'guide' | 'record' | 'moderation' | 'admin';
+export type AppScreen = 'home' | 'dialects' | 'vault' | 'guide' | 'record' | 'moderation' | 'admin' | 'profile';
 
 interface SidebarProps {
   activeScreen: AppScreen;
@@ -153,7 +153,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onNavigate, user
           !isWide && styles.profileCenter,
           { borderTopColor: C.border },
         ]}
-        onPress={user ? onSignOut : onSignIn}
+        onPress={user ? () => onNavigate('profile') : onSignIn}
         activeOpacity={0.7}
       >
         <View

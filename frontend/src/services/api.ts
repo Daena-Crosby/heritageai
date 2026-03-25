@@ -207,6 +207,20 @@ export const getCulturalGuide = async (
 };
 
 // ============================
+// User Profile
+// ============================
+
+export const getMyStories = async (): Promise<Story[]> => {
+  const { data } = await api.get('/users/me/stories');
+  return data.stories ?? [];
+};
+
+export const updateMyProfile = async (updates: { display_name?: string; bio?: string }) => {
+  const { data } = await api.patch('/users/me', updates);
+  return data;
+};
+
+// ============================
 // Processing Status
 // ============================
 

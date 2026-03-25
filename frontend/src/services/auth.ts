@@ -1,8 +1,25 @@
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import { api } from './api';
 
 const TOKEN_KEY = 'heritage_access_token';
 const REFRESH_KEY = 'heritage_refresh_token';
+
+// expo-secure-store is not supported on web — fall back to localStorage
+const storage = {
+  getItemAsync: async (key: string): Promise<string | null> => {
+    if (Platform.OS === 'web') return localStorage.getItem(key);
+    return SecureStore.getItemAsync(key);
+  },
+  setItemAsync: async (key: string, value: string): Promise<void> => {
+    if (Platform.OS === 'web') { localStorage.setItem(key, value); return; }
+    return SecureStore.setItemAsync(key, value);
+  },
+  deleteItemAsync: async (key: string): Promise<void> => {
+    if (Platform.OS === 'web') { localStorage.removeItem(key); return; }
+    return SecureStore.deleteItemAsync(key);
+  },
+};
 
 export interface AuthUser {
   id: string;
@@ -11,17 +28,17 @@ export interface AuthUser {
 
 // Store tokens securely on device
 export const saveTokens = async (accessToken: string, refreshToken: string) => {
-  await SecureStore.setItemAsync(TOKEN_KEY, accessToken);
-  await SecureStore.setItemAsync(REFRESH_KEY, refreshToken);
+  await storage.setItemAsync(TOKEN_KEY, accessToken);
+  await storage.setItemAsync(REFRESH_KEY, refreshToken);
 };
 
 export const getAccessToken = async (): Promise<string | null> => {
-  return SecureStore.getItemAsync(TOKEN_KEY);
+  return storage.getItemAsync(TOKEN_KEY);
 };
 
 export const clearTokens = async () => {
-  await SecureStore.deleteItemAsync(TOKEN_KEY);
-  await SecureStore.deleteItemAsync(REFRESH_KEY);
+  await storage.deleteItemAsync(TOKEN_KEY);
+  await storage.deleteItemAsync(REFRESH_KEY);
 };
 
 // Attach token to all outgoing API requests
@@ -39,7 +56,7 @@ export const attachAuthInterceptor = () => {
     (response) => response,
     async (error) => {
       if (error.response?.status === 401) {
-        const refreshToken = await SecureStore.getItemAsync(REFRESH_KEY);
+        const refreshToken = await storage.getItemAsync(REFRESH_KEY);
         if (refreshToken) {
           try {
             const { data } = await api.post('/auth/refresh', { refreshToken });

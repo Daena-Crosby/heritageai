@@ -15,6 +15,8 @@ interface SidebarProps {
   activeScreen: AppScreen;
   onNavigate: (screen: AppScreen) => void;
   user: { id: string; email: string } | null;
+  onSignIn?: () => void;
+  onSignOut?: () => void;
 }
 
 const NAV_ITEMS: {
@@ -29,12 +31,12 @@ const NAV_ITEMS: {
   { id: 'guide', label: 'Cultural Guide', icon: 'compass-outline', iconActive: 'compass' },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onNavigate, user }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onNavigate, user, onSignIn, onSignOut }) => {
   const { colors: C, isDark, toggle } = useTheme();
   const { width } = useWindowDimensions();
   const isWide = width >= 600;
 
-  const displayName = user?.email?.split('@')[0] || 'Archivist';
+  const displayName = user?.email?.split('@')[0] || 'Sign In';
 
   return (
     <View
@@ -129,26 +131,38 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onNavigate, user
         </TouchableOpacity>
       )}
 
-      {/* User profile */}
-      <View
+      {/* User profile / sign-in */}
+      <TouchableOpacity
         style={[
           styles.profile,
           !isWide && styles.profileCenter,
           { borderTopColor: C.border },
         ]}
+        onPress={user ? onSignOut : onSignIn}
+        activeOpacity={0.7}
       >
-        <View style={[styles.profileAvatar, { backgroundColor: C.surfaceAlt, borderColor: C.border }]}>
-          <Ionicons name="person" size={15} color={C.textSub} />
+        <View
+          style={[
+            styles.profileAvatar,
+            {
+              backgroundColor: user ? C.orange : C.surfaceAlt,
+              borderColor: user ? C.orange : C.border,
+            },
+          ]}
+        >
+          <Ionicons name="person" size={15} color={user ? '#FFF' : C.textSub} />
         </View>
         {isWide && (
           <View style={{ flex: 1 }}>
             <Text style={[styles.profileName, { color: C.text }]} numberOfLines={1}>
               {displayName}
             </Text>
-            <Text style={[styles.profileRole, { color: C.textMuted }]}>VERIFIED MEMBER</Text>
+            <Text style={[styles.profileRole, { color: user ? C.orange : C.textMuted }]}>
+              {user ? 'TAP TO SIGN OUT' : 'TAP TO SIGN IN'}
+            </Text>
           </View>
         )}
-      </View>
+      </TouchableOpacity>
     </View>
   );
 };

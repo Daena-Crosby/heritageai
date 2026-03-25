@@ -7,8 +7,12 @@ import {
   ActivityIndicator,
   SafeAreaView,
   StatusBar,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 import { Sidebar, AppScreen } from './src/components/Sidebar';
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -18,7 +22,7 @@ import { CulturalGuideScreen } from './src/screens/CulturalGuideScreen';
 import { RecordingScreen } from './src/screens/RecordingScreen';
 import { StoryViewScreen } from './src/screens/StoryViewScreen';
 import { AuthScreen } from './src/screens/AuthScreen';
-import { getAccessToken, attachAuthInterceptor, getMyProfile } from './src/services/auth';
+import { getAccessToken, attachAuthInterceptor, getMyProfile, logout } from './src/services/auth';
 
 const SCREEN_LABELS: Record<AppScreen, string> = {
   home: 'HOME NAVIGATOR',
@@ -31,6 +35,7 @@ const SCREEN_LABELS: Record<AppScreen, string> = {
 // Inner component — can safely call useTheme() since it sits inside ThemeProvider
 function AppContent() {
   const { colors: C, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const [authChecked, setAuthChecked] = useState(false);
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
@@ -60,6 +65,31 @@ function AppContent() {
   const handleNavigate = (screen: AppScreen) => {
     setSelectedStoryId(null);
     setActiveScreen(screen);
+  };
+
+  const handleSignIn = () => setShowAuth(true);
+
+  const handleSignOut = () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+          setUser(null);
+        },
+      },
+    ]);
+  };
+
+  const handleNotifications = () => {
+    Alert.alert('Notifications', 'You have no new notifications.');
+  };
+
+  const handleSearch = () => {
+    setSelectedStoryId(null);
+    setActiveScreen('vault');
   };
 
   const renderContent = () => {
@@ -113,7 +143,13 @@ function AppContent() {
     <SafeAreaView style={[styles.root, { backgroundColor: C.bg }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.sidebar} />
       <View style={styles.layout}>
-        <Sidebar activeScreen={activeScreen} onNavigate={handleNavigate} user={user} />
+        <Sidebar
+          activeScreen={activeScreen}
+          onNavigate={handleNavigate}
+          user={user}
+          onSignIn={handleSignIn}
+          onSignOut={handleSignOut}
+        />
 
         <View style={styles.main}>
           {/* Top bar */}
@@ -122,28 +158,24 @@ function AppContent() {
               {SCREEN_LABELS[activeScreen]}
             </Text>
             <View style={styles.topBarRight}>
-              <TouchableOpacity style={styles.topBarIcon}>
+              <TouchableOpacity style={styles.topBarIcon} onPress={handleNotifications}>
                 <Ionicons name="notifications-outline" size={18} color={C.textSub} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.topBarIcon}>
+              <TouchableOpacity style={styles.topBarIcon} onPress={handleSearch}>
                 <Ionicons name="search-outline" size={18} color={C.textSub} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.userBadge, { backgroundColor: C.surfaceAlt, borderColor: C.border }]}
-                onPress={user ? () => setUser(null) : () => setShowAuth(true)}
-              >
-                <View style={[styles.userAvatar, { backgroundColor: C.orange }]}>
-                  <Ionicons name="person" size={13} color="#FFF" />
-                </View>
-                <Text style={[styles.userBadgeText, { color: C.text }]}>
-                  {user ? (user.email.split('@')[0] || 'Profile').toUpperCase() : 'SIGN IN'}
-                </Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Screen content */}
-          <View style={styles.screenArea}>{renderContent()}</View>
+          {/* Screen content — KAV here uses the real safe-area inset so the
+              keyboard offset is exact on every iPhone model */}
+          <KeyboardAvoidingView
+            style={styles.screenArea}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={insets.top + 52}
+          >
+            {renderContent()}
+          </KeyboardAvoidingView>
         </View>
       </View>
     </SafeAreaView>
@@ -152,9 +184,11 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
 
@@ -207,28 +241,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  userBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderWidth: 1,
-    marginLeft: 4,
-  },
-  userAvatar: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  userBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.5,
   },
   screenArea: {
     flex: 1,

@@ -28,7 +28,7 @@ const DEFAULT_META = {
   storytellerLocation: '',
   storytellerDialect: '',
   ageGroup: '',
-  country: 'Jamaica',
+  country: '',
   language: 'Jamaican Patois',
   theme: '',
 };
@@ -129,7 +129,7 @@ export const RecordingScreen: React.FC<RecordingScreenProps> = ({ onBack }) => {
 
   const selectedCategory = metadata.theme
     ? metadata.theme.charAt(0).toUpperCase() + metadata.theme.slice(1)
-    : 'Folklore';
+    : null;
 
   return (
     <ScrollView
@@ -278,33 +278,41 @@ export const RecordingScreen: React.FC<RecordingScreenProps> = ({ onBack }) => {
                 onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
                 disabled={isProcessing}
               >
-                <Text style={[styles.categoryBtnText, { color: C.text }]}>{selectedCategory}</Text>
+                <Text style={[styles.categoryBtnText, { color: selectedCategory ? C.text : C.textMuted }]}>
+                  {selectedCategory ?? 'Theme'}
+                </Text>
                 <Ionicons name="chevron-down" size={14} color={C.textSub} />
               </TouchableOpacity>
               {showCategoryDropdown && (
                 <View style={[styles.dropdown, { backgroundColor: C.surface, borderColor: C.border }]}>
-                  {CATEGORIES.map((cat) => (
-                    <TouchableOpacity
-                      key={cat}
-                      style={[
-                        styles.dropdownItem,
-                        cat.toLowerCase() === metadata.theme && { backgroundColor: C.activeNav },
-                      ]}
-                      onPress={() => {
-                        setMetadata((prev) => ({ ...prev, theme: cat.toLowerCase() }));
-                        setShowCategoryDropdown(false);
-                      }}
-                    >
-                      <Text
+                  <ScrollView
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={true}
+                    nestedScrollEnabled={true}
+                  >
+                    {CATEGORIES.map((cat) => (
+                      <TouchableOpacity
+                        key={cat}
                         style={[
-                          styles.dropdownItemText,
-                          { color: cat.toLowerCase() === metadata.theme ? C.text : C.textSub },
+                          styles.dropdownItem,
+                          cat.toLowerCase() === metadata.theme && { backgroundColor: C.activeNav },
                         ]}
+                        onPress={() => {
+                          setMetadata((prev) => ({ ...prev, theme: cat.toLowerCase() }));
+                          setShowCategoryDropdown(false);
+                        }}
                       >
-                        {cat}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                        <Text
+                          style={[
+                            styles.dropdownItemText,
+                            { color: cat.toLowerCase() === metadata.theme ? C.text : C.textSub },
+                          ]}
+                        >
+                          {cat}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
                 </View>
               )}
             </View>
@@ -401,6 +409,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     marginTop: 4,
+    maxHeight: 200,
     overflow: 'hidden',
     elevation: 10,
     zIndex: 20,

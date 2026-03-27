@@ -10,12 +10,15 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
-import { login, register } from '../services/auth';
+import { fonts } from '../theme/fonts';
+import { spacing, borderRadius, gradients } from '../theme/colors';
+import { login, register, AuthUser } from '../services/auth';
 
 interface AuthScreenProps {
-  onAuthSuccess: (user: { id: string; email: string }) => void;
+  onAuthSuccess: (user: AuthUser) => void;
   onSkip: () => void;
 }
 
@@ -63,35 +66,67 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onSkip })
       style={[styles.container, { backgroundColor: C.bg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Logo */}
         <View style={styles.logoArea}>
-          <View style={[styles.logoIcon, { backgroundColor: C.surfaceAlt }]}>
-            <Ionicons name="flame" size={28} color={C.orange} />
-          </View>
-          <Text style={[styles.logoText, { color: C.text }]}>Heritage AI</Text>
-          <Text style={[styles.logoSub, { color: C.orange }]}>DIGITAL ARCHIVE</Text>
+          <LinearGradient
+            colors={gradients.primary}
+            style={styles.logoGradient}
+          >
+            <View style={[styles.logoInner, { backgroundColor: C.bg }]}>
+              <Ionicons name="flame" size={36} color={C.orange} />
+            </View>
+          </LinearGradient>
+          <Text style={[styles.logoText, { color: C.text, fontFamily: fonts.epilogue.bold }]}>
+            Heritage AI
+          </Text>
+          <Text style={[styles.logoSub, { color: C.textSub, fontFamily: fonts.manrope.regular }]}>
+            Preserve your cultural legacy
+          </Text>
         </View>
 
-        <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.border }]}>
-          <View style={[styles.tabs, { borderBottomColor: C.border }]}>
+        {/* Auth Card */}
+        <View style={[styles.card, { backgroundColor: C.surfaceContainer }]}>
+          {/* Tabs */}
+          <View style={[styles.tabs, { backgroundColor: C.surfaceContainerHigh }]}>
             {(['login', 'register'] as const).map((m) => (
               <TouchableOpacity
                 key={m}
-                style={[styles.tab, mode === m && { borderBottomColor: C.orange }]}
-                onPress={() => { setMode(m); setError(null); setSuccessMsg(null); }}
+                style={[
+                  styles.tab,
+                  mode === m && { backgroundColor: C.orange },
+                ]}
+                onPress={() => {
+                  setMode(m);
+                  setError(null);
+                  setSuccessMsg(null);
+                }}
               >
-                <Text style={[styles.tabText, { color: mode === m ? C.orange : C.textSub }, mode === m && styles.tabTextActive]}>
-                  {m === 'login' ? 'Sign In' : 'Create Account'}
+                <Text
+                  style={[
+                    styles.tabText,
+                    {
+                      color: mode === m ? '#FFF' : C.textSub,
+                      fontFamily: mode === m ? fonts.manrope.semibold : fonts.manrope.regular,
+                    },
+                  ]}
+                >
+                  {m === 'login' ? 'Sign In' : 'Register'}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
 
+          {/* Display Name (Register only) */}
           {mode === 'register' && (
-            <View style={[styles.inputWrapper, { backgroundColor: C.surfaceAlt, borderColor: C.border }]}>
-              <Ionicons name="person-outline" size={16} color={C.textMuted} style={styles.inputIcon} />
+            <View style={[styles.inputWrapper, { backgroundColor: C.surfaceContainerHigh }]}>
+              <Ionicons name="person-outline" size={18} color={C.textMuted} />
               <TextInput
-                style={[styles.input, { color: C.text }]}
+                style={[styles.input, { color: C.text, fontFamily: fonts.manrope.regular }]}
                 placeholder="Display name (optional)"
                 placeholderTextColor={C.textMuted}
                 value={displayName}
@@ -101,10 +136,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onSkip })
             </View>
           )}
 
-          <View style={[styles.inputWrapper, { backgroundColor: C.surfaceAlt, borderColor: C.border }]}>
-            <Ionicons name="mail-outline" size={16} color={C.textMuted} style={styles.inputIcon} />
+          {/* Email */}
+          <View style={[styles.inputWrapper, { backgroundColor: C.surfaceContainerHigh }]}>
+            <Ionicons name="mail-outline" size={18} color={C.textMuted} />
             <TextInput
-              style={[styles.input, { color: C.text }]}
+              style={[styles.input, { color: C.text, fontFamily: fonts.manrope.regular }]}
               placeholder="Email address"
               placeholderTextColor={C.textMuted}
               value={email}
@@ -115,10 +151,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onSkip })
             />
           </View>
 
-          <View style={[styles.inputWrapper, { backgroundColor: C.surfaceAlt, borderColor: C.border }]}>
-            <Ionicons name="lock-closed-outline" size={16} color={C.textMuted} style={styles.inputIcon} />
+          {/* Password */}
+          <View style={[styles.inputWrapper, { backgroundColor: C.surfaceContainerHigh }]}>
+            <Ionicons name="lock-closed-outline" size={18} color={C.textMuted} />
             <TextInput
-              style={[styles.input, { color: C.text }]}
+              style={[styles.input, { color: C.text, fontFamily: fonts.manrope.regular }]}
               placeholder="Password (min. 8 characters)"
               placeholderTextColor={C.textMuted}
               value={password}
@@ -127,84 +164,193 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onSkip })
             />
           </View>
 
+          {/* Error/Success Messages */}
           {error && (
             <View style={[styles.msgBox, { backgroundColor: `${C.error}15` }]}>
-              <Ionicons name="alert-circle-outline" size={14} color={C.error} />
-              <Text style={[styles.msgText, { color: C.error }]}>{error}</Text>
+              <Ionicons name="alert-circle" size={18} color={C.error} />
+              <Text style={[styles.msgText, { color: C.error, fontFamily: fonts.manrope.medium }]}>
+                {error}
+              </Text>
             </View>
           )}
           {successMsg && (
             <View style={[styles.msgBox, { backgroundColor: `${C.success}15` }]}>
-              <Ionicons name="checkmark-circle-outline" size={14} color={C.success} />
-              <Text style={[styles.msgText, { color: C.success }]}>{successMsg}</Text>
+              <Ionicons name="checkmark-circle" size={18} color={C.success} />
+              <Text style={[styles.msgText, { color: C.success, fontFamily: fonts.manrope.medium }]}>
+                {successMsg}
+              </Text>
             </View>
           )}
 
+          {/* Submit Button */}
           <TouchableOpacity
-            style={[styles.submitBtn, { backgroundColor: C.orange }, loading && styles.disabled]}
             onPress={handleSubmit}
             disabled={loading}
+            activeOpacity={0.9}
           >
-            {loading ? (
-              <ActivityIndicator color="#FFF" />
-            ) : (
-              <Text style={styles.submitBtnText}>
-                {mode === 'login' ? 'Sign In' : 'Create Account'}
-              </Text>
-            )}
+            <LinearGradient
+              colors={loading ? [C.textMuted, C.textMuted] : gradients.primary}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[styles.submitBtn, loading && styles.disabled]}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={[styles.submitBtnText, { fontFamily: fonts.manrope.bold }]}>
+                  {mode === 'login' ? 'Sign In' : 'Create Account'}
+                </Text>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
+        {/* Skip Button */}
         <TouchableOpacity style={styles.skipBtn} onPress={onSkip}>
-          <Text style={[styles.skipText, { color: C.textSub }]}>
-            Continue as guest — browse stories
+          <Text style={[styles.skipText, { color: C.textSub, fontFamily: fonts.manrope.medium }]}>
+            Continue as guest
           </Text>
+          <Ionicons name="arrow-forward" size={16} color={C.textSub} />
         </TouchableOpacity>
+
+        {/* Features */}
+        <View style={styles.features}>
+          {[
+            { icon: 'mic', text: 'Record stories' },
+            { icon: 'language', text: 'Translate dialects' },
+            { icon: 'sparkles', text: 'AI-powered' },
+          ].map((feature, index) => (
+            <View key={index} style={[styles.featureItem, { backgroundColor: C.surfaceContainer }]}>
+              <Ionicons name={feature.icon as any} size={20} color={C.orange} />
+              <Text style={[styles.featureText, { color: C.textSub, fontFamily: fonts.manrope.medium }]}>
+                {feature.text}
+              </Text>
+            </View>
+          ))}
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scroll: { flexGrow: 1, justifyContent: 'center', padding: 24, gap: 20 },
-  logoArea: { alignItems: 'center', gap: 6 },
-  logoIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 16,
+  container: {
+    flex: 1,
+  },
+  scroll: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: spacing.xl,
+    gap: spacing.xl,
+  },
+  // Logo
+  logoArea: {
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  logoGradient: {
+    width: 80,
+    height: 80,
+    borderRadius: borderRadius.xl,
+    padding: 4,
+    marginBottom: spacing.md,
+  },
+  logoInner: {
+    flex: 1,
+    borderRadius: borderRadius.xl - 4,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4,
   },
-  logoText: { fontSize: 26, fontWeight: 'bold' },
-  logoSub: { fontSize: 10, fontWeight: '700', letterSpacing: 2 },
-  card: { borderRadius: 16, padding: 22, borderWidth: 1, gap: 12 },
-  tabs: { flexDirection: 'row', borderBottomWidth: 1, marginBottom: 4 },
+  logoText: {
+    fontSize: 32,
+  },
+  logoSub: {
+    fontSize: 15,
+  },
+  // Card
+  card: {
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
+    gap: spacing.lg,
+  },
+  tabs: {
+    flexDirection: 'row',
+    borderRadius: borderRadius.lg,
+    padding: spacing.xs,
+    marginBottom: spacing.sm,
+  },
   tab: {
     flex: 1,
-    paddingBottom: 13,
+    paddingVertical: spacing.md,
     alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-    marginBottom: -1,
+    borderRadius: borderRadius.md,
   },
-  tabText: { fontSize: 14 },
-  tabTextActive: { fontWeight: '700' },
+  tabText: {
+    fontSize: 14,
+  },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: 13,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
   },
-  inputIcon: { marginRight: 10 },
-  input: { flex: 1, fontSize: 14, paddingVertical: 13 },
-  msgBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 8, padding: 10 },
-  msgText: { fontSize: 13, flex: 1 },
-  submitBtn: { borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 2 },
-  disabled: { opacity: 0.5 },
-  submitBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
-  skipBtn: { alignItems: 'center', paddingVertical: 10 },
-  skipText: { fontSize: 13, textDecorationLine: 'underline' },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    paddingVertical: spacing.lg,
+  },
+  msgBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+  },
+  msgText: {
+    fontSize: 13,
+    flex: 1,
+    lineHeight: 20,
+  },
+  submitBtn: {
+    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.lg,
+    alignItems: 'center',
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+  submitBtnText: {
+    color: '#FFF',
+    fontSize: 16,
+  },
+  // Skip
+  skipBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+  },
+  skipText: {
+    fontSize: 14,
+  },
+  // Features
+  features: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.md,
+    flexWrap: 'wrap',
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.full,
+  },
+  featureText: {
+    fontSize: 13,
+  },
 });

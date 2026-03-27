@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,700;0,800;0,900;1,700;1,800;1,900&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#2a170f",
+              "on-secondary": "#372f22",
+              "outline-variant": "#594139",
+              "on-secondary-fixed": "#221a0f",
+              "on-tertiary-fixed-variant": "#5a4137",
+              "secondary-fixed": "#efe0cd",
+              "on-secondary-container": "#c4b6a5",
+              "on-primary-fixed-variant": "#802900",
+              "on-error": "#690005",
+              "on-tertiary-container": "#432c23",
+              "primary-fixed-dim": "#ffb59a",
+              "background": "#18120d",
+              "on-primary-container": "#5c1c00",
+              "surface-container-lowest": "#120d08",
+              "surface-bright": "#3f3831",
+              "surface-container-low": "#201b15",
+              "on-surface": "#ede0d7",
+              "secondary": "#d2c4b2",
+              "surface-tint": "#ffb59a",
+              "on-surface-variant": "#e2bfb3",
+              "tertiary-fixed-dim": "#e3bfb2",
+              "on-error-container": "#ffdad6",
+              "inverse-surface": "#ede0d7",
+              "surface-dim": "#18120d",
+              "on-secondary-fixed-variant": "#4f4538",
+              "surface": "#18120d",
+              "surface-variant": "#3a342d",
+              "error-container": "#93000a",
+              "on-background": "#ede0d7",
+              "surface-container-high": "#2f2923",
+              "inverse-primary": "#a83900",
+              "surface-container": "#251f19",
+              "primary-fixed": "#ffdbcf",
+              "secondary-fixed-dim": "#d2c4b2",
+              "tertiary-fixed": "#ffdbce",
+              "tertiary": "#e3bfb2",
+              "primary-container": "#ff6b2c",
+              "tertiary-container": "#b39286",
+              "outline": "#a98a7f",
+              "on-tertiary": "#422b22",
+              "on-primary": "#5b1b00",
+              "primary": "#ffb59a",
+              "surface-container-highest": "#3a342d",
+              "error": "#ffb4ab",
+              "inverse-on-surface": "#362f29",
+              "secondary-container": "#51483a",
+              "on-primary-fixed": "#380d00"
+            },
+            fontFamily: {
+              "headline": ["Epilogue"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .artifact-shadow {
+            box-shadow: 0 20px 40px -20px rgba(56, 13, 0, 0.4);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body min-h-screen selection:bg-primary/30">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-stone-50/80 dark:bg-stone-950/80 backdrop-blur-xl border-none">
+<div class="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="text-orange-600 dark:text-orange-400 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-colors p-2 rounded-full active:scale-95 duration-200 ease-in-out">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="text-2xl font-black text-orange-600 dark:text-orange-500 italic font-headline tracking-tight">Heritage AI</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-orange-600 dark:text-orange-400 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-colors p-2 rounded-full active:scale-95 duration-200 ease-in-out">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="text-orange-600 dark:text-orange-400 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-colors p-2 rounded-full active:scale-95 duration-200 ease-in-out">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-7xl mx-auto overflow-x-hidden">
+<!-- Hero Section -->
+<section class="relative mb-16 mt-4">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+<div class="md:col-span-7 z-10">
+<h2 class="font-headline text-5xl md:text-7xl font-black tracking-tighter leading-[0.9] text-on-surface mb-6">
+                        Preserve Your <br/><span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-container">Heritage</span>
+</h2>
+<p class="text-on-surface-variant text-lg max-w-md mb-8 leading-relaxed">
+                        Your stories are the threads of history. Record a memory today and let AI weave it into the digital vault for generations to come.
+                    </p>
+<button class="group flex items-center gap-4 bg-gradient-to-br from-primary to-primary-container text-on-primary px-8 py-4 rounded-xl font-bold text-lg shadow-xl hover:shadow-primary/20 transition-all active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">mic</span>
+<span>Record a Story</span>
+</button>
+</div>
+<div class="md:col-span-5 relative mt-8 md:mt-0">
+<div class="aspect-[4/5] rounded-[2.5rem] overflow-hidden artifact-shadow relative">
+<img alt="Cultural artifact" class="w-full h-full object-cover grayscale-[0.2] contrast-[1.1]" data-alt="Close-up of intricate hand-carved wooden african mask with warm cinematic lighting and deep shadows in a museum setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnF2PFQOIPSadIVblxjvNwXL2ZyNhJQDkh6-c_SsJM1f6BsIFDv4iZAC4u0YLN-6B5olU4yXj6e13Zl6GNX19MrwYkUQveirKtTPRi2Cw9mfOunkctt-cN3HyeFUOZFMwUIE0wKookSbBaDkRMjJ5JxXG6OU0dLRvrvpGc3wuYSrBRjzs0-z0SjWcMeIflvp8-HjDYxjCgg0KVxLoQsbMqrS_6N517GK_mCTm2bXH_hpMloKSYxrj3wbw3nXkn1c5cJkI52yGpv_g"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent"></div>
+</div>
+<!-- Decorative Element -->
+<div class="absolute -bottom-6 -left-6 w-32 h-32 bg-primary-container/20 rounded-full blur-3xl"></div>
+</div>
+</div>
+</section>
+<!-- Story Feed Section -->
+<section>
+<div class="flex items-baseline justify-between mb-10 border-none">
+<h3 class="font-headline text-3xl font-bold tracking-tight text-on-surface">Curated Stories</h3>
+<span class="font-label text-sm uppercase tracking-widest text-primary font-bold">Latest Archives</span>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Large Card: Anansi Stories -->
+<article class="md:col-span-2 group relative overflow-hidden rounded-xl bg-surface-container-low transition-all hover:bg-surface-container border-none">
+<div class="flex flex-col md:flex-row h-full">
+<div class="md:w-1/2 overflow-hidden">
+<img alt="Folklore imagery" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Stylized illustration of a spider on a golden web against a deep amber sunset background, folkloric artistic style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkXAHW_ClSdRUT25du-QBaoxLD4i_5FpfI9PWaxmVom0ULrwyyExzUPKTEZH7NHLrSjjCsXrwYUu_OBGYDXWqW0Fw17t10LqJXFq4--a2_ITEbpPk69Xm0brWR2Buop5Nhr4ogkGpFYlCzt0NI6tLM5d835h2ykkNT3NhtYRCyC-GUvisl-o2R0Vd9fXQT3xbJsqdCcV0KPKx8tKmKcPh8dJrYDp7mI8S7ZfEnStCG_Ji5gzMk0d37IE4TFn2AfYwsy2BU846WZFE"/>
+</div>
+<div class="p-8 md:w-1/2 flex flex-col justify-between">
+<div>
+<div class="flex flex-wrap gap-2 mb-4">
+<span class="bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-primary/20">Jamaican Patois</span>
+<span class="bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">Folklore</span>
+</div>
+<h4 class="font-headline text-3xl font-bold text-on-surface mb-3 leading-tight">Anansi Stories: The Weaver of Wit</h4>
+<p class="text-on-surface-variant line-clamp-3 text-sm leading-relaxed mb-6">
+                                    A collection of orally preserved tales featuring the legendary trickster spirit, narrated in the rhythmic pulse of Kingston's streets.
+                                </p>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<div class="flex items-center gap-4 text-xs font-semibold">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">visibility</span> 12.4k</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">favorite</span> 2.1k</span>
+</div>
+<button class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-primary transition-colors hover:bg-primary hover:text-on-primary">
+<span class="material-symbols-outlined">play_arrow</span>
+</button>
+</div>
+</div>
+</div>
+</article>
+<!-- Small Card: Recipe -->
+<article class="group relative overflow-hidden rounded-xl bg-surface-container-low transition-all hover:bg-surface-container border-none p-6 flex flex-col justify-between">
+<div>
+<div class="aspect-square rounded-lg overflow-hidden mb-6">
+<img alt="Heritage Food" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Vibrant traditional caribbean dish with steamed ackee, saltfish, and fried plantains on a rustic ceramic plate" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAiFwHYYjxPnBtYTHFTkvNYHZknGhVJkJ2HezVwkMpzL_gMXIgBVONELNOxw-y5rf5msi-U09C26N0oeTyc_sskOqWLjrWPv3IPL-Sh1tsKR2x3Rh1CsaiA8R6Su2PimAFboZs0Ynv3JfyAQA5Ky3FTzgVbEv8TBwjVr7hHmSuOklbegtc74mATMTshFVcqUV4pNpm90OHWvmffLN3PBp9rk4CE7W9Z3UPKKK8u_z2DXPbmANlG3jpPdFaFrCiB4CophcxwPhdIWHg"/>
+</div>
+<div class="flex flex-wrap gap-2 mb-4">
+<span class="bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">Culinary</span>
+</div>
+<h4 class="font-headline text-xl font-bold text-on-surface leading-snug">Grandma's Ackee Recipe</h4>
+</div>
+<div class="flex items-center justify-between mt-6 pt-4 border-t border-outline-variant/10">
+<span class="text-xs font-semibold text-on-surface-variant">4.2k listens</span>
+<span class="material-symbols-outlined text-primary">bookmark</span>
+</div>
+</article>
+<!-- Small Card: Music -->
+<article class="group relative overflow-hidden rounded-xl bg-surface-container-low transition-all hover:bg-surface-container border-none p-6 flex flex-col justify-between">
+<div>
+<div class="aspect-square rounded-lg overflow-hidden mb-6">
+<img alt="Drumming" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Hands of an elder drumming on a traditional wooden djembe, focused shallow depth of field, warm stage lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTUlp87mDVRtyHphpdTNhp9GQwPcCTF10_j-7mdEF1hGJGTdksVptp80h70VcDy1yW2XARZWbMbTCfQ_zwGlVdP7Ch5r-csyrKhMSae-HCbSN_Iy95XR64uDhiATlfF835AnfflMSb2_dI9xAQE6hwUNGxZW2n8nM9KseGrbWrEJpeSa0pk96MNyiH1zBfirnuflpqxIeOgchs_fSbdIW3NTpL7wrvi4m-WBBG6QJpuU5u2KA8GZNzaCxd5KYW7BEZg6N6NC_RYzg"/>
+</div>
+<div class="flex flex-wrap gap-2 mb-4">
+<span class="bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">Yoruba</span>
+<span class="bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">Music</span>
+</div>
+<h4 class="font-headline text-xl font-bold text-on-surface leading-snug">The Rhythms of Ifé</h4>
+</div>
+<div class="flex items-center justify-between mt-6 pt-4 border-t border-outline-variant/10">
+<span class="text-xs font-semibold text-on-surface-variant">892 listens</span>
+<span class="material-symbols-outlined text-primary">bookmark</span>
+</div>
+</article>
+<!-- Wide Card: Elders -->
+<article class="md:col-span-2 group relative overflow-hidden rounded-xl bg-surface-container-low transition-all hover:bg-surface-container border-none">
+<div class="flex h-full min-h-[200px]">
+<div class="p-8 flex-1 flex flex-col justify-between">
+<div>
+<div class="flex gap-2 mb-4">
+<span class="bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">Archive</span>
+</div>
+<h4 class="font-headline text-2xl font-bold text-on-surface mb-2">Ancestral Voices: The Elders' Wisdom</h4>
+<p class="text-on-surface-variant text-sm leading-relaxed max-w-sm">
+                                    A multi-part series capturing the memories of our community matriarchs and patriarchs.
+                                </p>
+</div>
+<div class="flex items-center gap-4 text-xs font-bold text-primary mt-4">
+<span>EXPLORE SERIES</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</div>
+</div>
+<div class="w-1/3 bg-primary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-6xl text-primary/30" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+</div>
+</div>
+</article>
+</div>
+</section>
+<!-- Spacer for Bottom Nav -->
+<div class="h-20"></div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 bg-stone-50/90 dark:bg-stone-950/90 backdrop-blur-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] rounded-t-[2rem]">
+<div class="flex justify-around items-center px-4 pb-8 pt-4">
+<!-- Home (Active) -->
+<a class="flex flex-col items-center justify-center bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-2xl px-5 py-2 scale-105 transition-all tap-highlight-none duration-300" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home_storage</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider mt-1">Home</span>
+</a>
+<!-- Vault -->
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-2 opacity-70 hover:opacity-100 hover:text-orange-500 transition-all" href="#">
+<span class="material-symbols-outlined">auto_stories</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider mt-1">Vault</span>
+</a>
+<!-- Record (Center Action) -->
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-2 opacity-70 hover:opacity-100 hover:text-orange-500 transition-all" href="#">
+<span class="material-symbols-outlined">mic</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider mt-1">Record</span>
+</a>
+<!-- Guide -->
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-2 opacity-70 hover:opacity-100 hover:text-orange-500 transition-all" href="#">
+<span class="material-symbols-outlined">temp_preferences_custom</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider mt-1">Guide</span>
+</a>
+<!-- Settings -->
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-2 opacity-70 hover:opacity-100 hover:text-orange-500 transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider mt-1">Settings</span>
+</a>
+</div>
+</nav>
+</body></html>

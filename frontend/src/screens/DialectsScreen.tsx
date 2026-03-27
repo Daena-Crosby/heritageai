@@ -9,16 +9,19 @@ import {
   useWindowDimensions,
   ActivityIndicator,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
+import { fonts } from '../theme/fonts';
+import { spacing, borderRadius, gradients } from '../theme/colors';
 import { translateDialect } from '../services/api';
 
 const DIALECTS = [
-  'Jamaican Patois',
-  'Trinidadian Slang',
-  'Nigerian Pidgin',
-  'Louisiana Creole',
-  'Haitian Kreyòl',
+  { id: 'Jamaican Patois', icon: '🇯🇲' },
+  { id: 'Trinidadian Slang', icon: '🇹🇹' },
+  { id: 'Nigerian Pidgin', icon: '🇳🇬' },
+  { id: 'Louisiana Creole', icon: '🇺🇸' },
+  { id: 'Haitian Kreyòl', icon: '🇭🇹' },
 ];
 
 const DIALECT_NOTES: Record<string, string> = {
@@ -64,287 +67,379 @@ export const DialectsScreen: React.FC = () => {
     }
   };
 
-  const hasResult = translation !== null || error !== null;
+  const selectedDialectData = DIALECTS.find(d => d.id === selectedDialect);
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: C.bg }]}
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
     >
-      {/* Header row */}
+      {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={[styles.title, { color: C.text }]}>Dialect Agent</Text>
-          <Text style={[styles.subtitle, { color: C.textSub }]}>LINGUISTIC ETYMOLOGY EXPLORER</Text>
-        </View>
-
-        {/* Source dropdown */}
-        <View style={[styles.dropdownWrapper, { zIndex: 20 }]}>
-          <Text style={[styles.sourceLabel, { color: C.textMuted }]}>SOURCE</Text>
-          <TouchableOpacity
-            style={[styles.dropdownBtn, { backgroundColor: C.surface, borderColor: C.orange }]}
-            onPress={() => setShowDropdown(!showDropdown)}
-          >
-            <Text style={[styles.dropdownBtnText, { color: C.text }]}>{selectedDialect}</Text>
-            <Ionicons name="chevron-down" size={14} color={C.text} />
-          </TouchableOpacity>
-          {showDropdown && (
-            <View
-              style={[
-                styles.dropdown,
-                { backgroundColor: C.surface, borderColor: C.border },
-              ]}
-            >
-              {DIALECTS.map((d) => (
-                <TouchableOpacity
-                  key={d}
-                  style={[
-                    styles.dropdownItem,
-                    d === selectedDialect && { backgroundColor: C.activeNav },
-                  ]}
-                  onPress={() => {
-                    setSelectedDialect(d);
-                    setShowDropdown(false);
-                    setTranslation(null);
-                    setError(null);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.dropdownItemText,
-                      { color: d === selectedDialect ? C.text : C.textSub },
-                      d === selectedDialect && styles.dropdownItemTextActive,
-                    ]}
-                  >
-                    {d}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
-      </View>
-
-      {/* Dialect note */}
-      <View style={[styles.dialectNote, { backgroundColor: C.surface, borderColor: C.border }]}>
-        <Ionicons name="information-circle-outline" size={16} color={C.orange} />
-        <Text style={[styles.dialectNoteText, { color: C.textSub }]}>
-          {DIALECT_NOTES[selectedDialect]}
+        <Text style={[styles.title, { color: C.text, fontFamily: fonts.epilogue.bold }]}>
+          Dialect Translator
+        </Text>
+        <Text style={[styles.subtitle, { color: C.textSub, fontFamily: fonts.manrope.regular }]}>
+          Translate cultural dialects to English with AI
         </Text>
       </View>
 
-      {/* Main layout */}
-      <View style={[styles.columns, !isWide && styles.columnsStack]}>
-        {/* Input panel */}
-        <View style={[styles.inputPanel, !isWide && styles.colFull]}>
-          <Text style={[styles.panelLabel, { color: C.textMuted }]}>
-            INPUT ({selectedDialect.toUpperCase()})
+      {/* Dialect Selector */}
+      <View style={[styles.dialectSelector, { backgroundColor: C.surfaceContainer }]}>
+        <Text style={[styles.selectorLabel, { color: C.textMuted, fontFamily: fonts.manrope.bold }]}>
+          SOURCE DIALECT
+        </Text>
+        <View style={styles.dialectPills}>
+          {DIALECTS.map((d) => (
+            <TouchableOpacity
+              key={d.id}
+              style={[
+                styles.dialectPill,
+                selectedDialect === d.id
+                  ? { backgroundColor: C.orange }
+                  : { backgroundColor: C.surfaceContainerHigh },
+              ]}
+              onPress={() => {
+                setSelectedDialect(d.id);
+                setTranslation(null);
+                setError(null);
+              }}
+            >
+              <Text style={styles.dialectEmoji}>{d.icon}</Text>
+              <Text
+                style={[
+                  styles.dialectPillText,
+                  {
+                    color: selectedDialect === d.id ? '#FFF' : C.textSub,
+                    fontFamily: selectedDialect === d.id ? fonts.manrope.semibold : fonts.manrope.regular,
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                {d.id.split(' ')[0]}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Dialect Info Card */}
+      <View style={[styles.infoCard, { backgroundColor: C.surfaceContainer }]}>
+        <View style={[styles.infoAccent, { backgroundColor: C.orange }]} />
+        <View style={styles.infoContent}>
+          <View style={styles.infoHeader}>
+            <Ionicons name="information-circle" size={18} color={C.orange} />
+            <Text style={[styles.infoTitle, { color: C.text, fontFamily: fonts.manrope.semibold }]}>
+              About {selectedDialect}
+            </Text>
+          </View>
+          <Text style={[styles.infoText, { color: C.textSub, fontFamily: fonts.manrope.regular }]}>
+            {DIALECT_NOTES[selectedDialect]}
           </Text>
-          <TextInput
-            style={[
-              styles.textArea,
-              { backgroundColor: C.surface, borderColor: C.border, color: C.text },
-            ]}
-            placeholder={`Enter text in ${selectedDialect}...`}
-            placeholderTextColor={C.textMuted}
-            value={inputText}
-            onChangeText={setInputText}
-            multiline
-            textAlignVertical="top"
-          />
-          <TouchableOpacity
-            style={[
-              styles.translateBtn,
-              { backgroundColor: C.orangeBtn },
-              (!inputText.trim() || loading) && styles.btnDisabled,
-            ]}
-            onPress={handleTranslate}
-            disabled={!inputText.trim() || loading}
+        </View>
+      </View>
+
+      {/* Input Section */}
+      <View style={[styles.inputSection, { backgroundColor: C.surfaceContainer }]}>
+        <Text style={[styles.inputLabel, { color: C.textMuted, fontFamily: fonts.manrope.bold }]}>
+          ENTER TEXT IN {selectedDialect.toUpperCase()}
+        </Text>
+        <TextInput
+          style={[styles.textArea, { backgroundColor: C.surfaceContainerHigh, color: C.text, fontFamily: fonts.manrope.regular }]}
+          placeholder={`Type or paste ${selectedDialect} text here...`}
+          placeholderTextColor={C.textMuted}
+          value={inputText}
+          onChangeText={setInputText}
+          multiline
+          textAlignVertical="top"
+        />
+        <TouchableOpacity
+          onPress={handleTranslate}
+          disabled={!inputText.trim() || loading}
+          activeOpacity={0.9}
+        >
+          <LinearGradient
+            colors={!inputText.trim() || loading ? [C.textMuted, C.textMuted] : gradients.primary}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.translateBtn, (!inputText.trim() || loading) && styles.btnDisabled]}
           >
             {loading ? (
               <ActivityIndicator color="#FFF" size="small" />
             ) : (
               <>
-                <Ionicons name="language" size={17} color="#FFF" />
-                <Text style={styles.translateBtnText}>Translate to English</Text>
+                <Ionicons name="language" size={20} color="#FFF" />
+                <Text style={[styles.translateBtnText, { fontFamily: fonts.manrope.bold }]}>
+                  Translate to English
+                </Text>
               </>
             )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Result panel */}
-        <View
-          style={[
-            styles.resultPanel,
-            { backgroundColor: C.surface, borderColor: C.border },
-            !isWide && styles.colFull,
-          ]}
-        >
-          {loading ? (
-            <View style={styles.center}>
-              <ActivityIndicator color={C.orange} size="large" />
-              <Text style={[styles.loadingText, { color: C.textSub }]}>
-                Translating…{'\n'}
-                <Text style={[styles.loadingHint, { color: C.textMuted }]}>
-                  Model may take 20–30 s to warm up
-                </Text>
-              </Text>
-            </View>
-          ) : error ? (
-            <View style={styles.center}>
-              <Ionicons name="alert-circle-outline" size={36} color={C.error} />
-              <Text style={[styles.errorTitle, { color: C.error }]}>Translation Error</Text>
-              <Text style={[styles.errorMsg, { color: C.textSub }]}>{error}</Text>
-              <TouchableOpacity
-                style={[styles.retryBtn, { borderColor: C.border }]}
-                onPress={handleTranslate}
-              >
-                <Text style={[styles.retryText, { color: C.orange }]}>Retry</Text>
-              </TouchableOpacity>
-            </View>
-          ) : translation !== null ? (
-            <View style={styles.translationResult}>
-              <View style={styles.resultHeader}>
-                <Ionicons name="checkmark-circle" size={20} color={C.success} />
-                <Text style={[styles.resultTitle, { color: C.text }]}>English Translation</Text>
-              </View>
-              <Text style={[styles.translationText, { color: C.text }]}>{translation}</Text>
-
-              {/* Dialect note section */}
-              <View style={[styles.etymologyBox, { backgroundColor: C.surfaceAlt, borderColor: C.border }]}>
-                <Text style={[styles.etymologyLabel, { color: C.orange }]}>
-                  DIALECT ORIGIN
-                </Text>
-                <Text style={[styles.etymologyText, { color: C.textSub }]}>
-                  {DIALECT_NOTES[selectedDialect]}
-                </Text>
-              </View>
-            </View>
-          ) : (
-            <View style={styles.center}>
-              <View style={[styles.awaitingIcon, { backgroundColor: C.surfaceAlt }]}>
-                <Ionicons name="flask-outline" size={36} color={C.textMuted} />
-              </View>
-              <Text style={[styles.awaitingTitle, { color: C.textSub }]}>Awaiting Input</Text>
-              <Text style={[styles.awaitingSub, { color: C.textMuted }]}>
-                ENTER HERITAGE TEXT TO ACTIVATE THE AGENT
-              </Text>
-            </View>
-          )}
-        </View>
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
+
+      {/* Result Section */}
+      <View style={[styles.resultSection, { backgroundColor: C.surfaceContainer }]}>
+        {loading ? (
+          <View style={styles.resultCenter}>
+            <ActivityIndicator color={C.orange} size="large" />
+            <Text style={[styles.loadingText, { color: C.textSub, fontFamily: fonts.manrope.medium }]}>
+              Translating...
+            </Text>
+            <Text style={[styles.loadingHint, { color: C.textMuted, fontFamily: fonts.manrope.regular }]}>
+              AI model may take 20-30s to warm up
+            </Text>
+          </View>
+        ) : error ? (
+          <View style={styles.resultCenter}>
+            <View style={[styles.errorIcon, { backgroundColor: `${C.error}20` }]}>
+              <Ionicons name="alert-circle" size={32} color={C.error} />
+            </View>
+            <Text style={[styles.errorTitle, { color: C.error, fontFamily: fonts.manrope.semibold }]}>
+              Translation Error
+            </Text>
+            <Text style={[styles.errorMsg, { color: C.textSub, fontFamily: fonts.manrope.regular }]}>
+              {error}
+            </Text>
+            <TouchableOpacity
+              style={[styles.retryBtn, { backgroundColor: C.surfaceContainerHigh }]}
+              onPress={handleTranslate}
+            >
+              <Ionicons name="refresh" size={16} color={C.orange} />
+              <Text style={[styles.retryText, { color: C.orange, fontFamily: fonts.manrope.semibold }]}>
+                Try Again
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : translation !== null ? (
+          <View style={styles.translationResult}>
+            <View style={styles.resultHeader}>
+              <View style={[styles.successIcon, { backgroundColor: `${C.success}20` }]}>
+                <Ionicons name="checkmark-circle" size={24} color={C.success} />
+              </View>
+              <Text style={[styles.resultTitle, { color: C.text, fontFamily: fonts.manrope.semibold }]}>
+                English Translation
+              </Text>
+            </View>
+            <Text style={[styles.translationText, { color: C.text, fontFamily: fonts.manrope.regular }]}>
+              {translation}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.resultCenter}>
+            <View style={[styles.awaitingIcon, { backgroundColor: C.surfaceContainerHigh }]}>
+              <Ionicons name="sparkles" size={32} color={C.textMuted} />
+            </View>
+            <Text style={[styles.awaitingTitle, { color: C.text, fontFamily: fonts.manrope.semibold }]}>
+              Ready to Translate
+            </Text>
+            <Text style={[styles.awaitingSub, { color: C.textMuted, fontFamily: fonts.manrope.regular }]}>
+              Enter text above to see the AI translation
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* Bottom spacing for nav bar */}
+      <View style={{ height: 120 }} />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { padding: 24, paddingBottom: 40, gap: 20 },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    flexWrap: 'wrap',
-    gap: 16,
+  container: {
+    flex: 1,
   },
-  title: { fontSize: 30, fontWeight: 'bold', marginBottom: 4 },
-  subtitle: { fontSize: 11, fontWeight: '600', letterSpacing: 1.5 },
-  sourceLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1, marginBottom: 6 },
-  dropdownWrapper: { position: 'relative', minWidth: 180 },
-  dropdownBtn: {
+  content: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+  },
+  // Header
+  header: {
+    marginBottom: spacing.xl,
+  },
+  title: {
+    fontSize: 28,
+    marginBottom: spacing.xs,
+  },
+  subtitle: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  // Dialect Selector
+  dialectSelector: {
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  selectorLabel: {
+    fontSize: 10,
+    letterSpacing: 1,
+    marginBottom: spacing.md,
+  },
+  dialectPills: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  dialectPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderWidth: 1,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
   },
-  dropdownBtnText: { fontSize: 14, fontWeight: '600' },
-  dropdown: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginTop: 4,
-    overflow: 'hidden',
-    elevation: 10,
-    zIndex: 30,
+  dialectEmoji: {
+    fontSize: 16,
   },
-  dropdownItem: { paddingHorizontal: 14, paddingVertical: 11 },
-  dropdownItemText: { fontSize: 14 },
-  dropdownItemTextActive: { fontWeight: '600' },
-  dialectNote: {
+  dialectPillText: {
+    fontSize: 13,
+  },
+  // Info Card
+  infoCard: {
+    borderRadius: borderRadius.xl,
     flexDirection: 'row',
-    gap: 10,
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    alignItems: 'flex-start',
+    overflow: 'hidden',
+    marginBottom: spacing.lg,
   },
-  dialectNoteText: { flex: 1, fontSize: 13, lineHeight: 20 },
-  columns: { flexDirection: 'row', gap: 20, alignItems: 'flex-start' },
-  columnsStack: { flexDirection: 'column' },
-  colFull: { flex: undefined, width: '100%' },
-  inputPanel: { flex: 1.2, gap: 12 },
-  panelLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
+  infoAccent: {
+    width: 4,
+  },
+  infoContent: {
+    flex: 1,
+    padding: spacing.lg,
+  },
+  infoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  infoTitle: {
+    fontSize: 14,
+  },
+  infoText: {
+    fontSize: 14,
+    lineHeight: 22,
+  },
+  // Input Section
+  inputSection: {
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  inputLabel: {
+    fontSize: 10,
+    letterSpacing: 1,
+    marginBottom: spacing.md,
+  },
   textArea: {
-    borderRadius: 14,
-    padding: 16,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
     fontSize: 15,
-    minHeight: 220,
-    borderWidth: 1,
     lineHeight: 24,
+    minHeight: 150,
+    marginBottom: spacing.lg,
   },
   translateBtn: {
-    borderRadius: 12,
-    paddingVertical: 15,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: spacing.sm,
+    paddingVertical: spacing.lg,
+    borderRadius: borderRadius.lg,
   },
-  btnDisabled: { opacity: 0.45 },
-  translateBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
-  resultPanel: {
+  btnDisabled: {
+    opacity: 0.5,
+  },
+  translateBtnText: {
+    color: '#FFF',
+    fontSize: 15,
+  },
+  // Result Section
+  resultSection: {
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    minHeight: 200,
+  },
+  resultCenter: {
     flex: 1,
-    borderRadius: 14,
-    borderWidth: 1,
-    minHeight: 320,
-    overflow: 'hidden',
-  },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12, padding: 28 },
-  loadingText: { fontSize: 15, fontWeight: '600', textAlign: 'center', lineHeight: 24 },
-  loadingHint: { fontSize: 12, fontWeight: '400' },
-  errorTitle: { fontSize: 16, fontWeight: '700' },
-  errorMsg: { fontSize: 13, textAlign: 'center', lineHeight: 20 },
-  retryBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 9,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginTop: 4,
-  },
-  retryText: { fontSize: 14, fontWeight: '600' },
-  awaitingIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 6,
+    padding: spacing.xl,
+    gap: spacing.md,
   },
-  awaitingTitle: { fontSize: 16, fontWeight: '600' },
-  awaitingSub: { fontSize: 10, fontWeight: '700', letterSpacing: 1, textAlign: 'center' },
-  translationResult: { padding: 20, gap: 16 },
-  resultHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  resultTitle: { fontSize: 16, fontWeight: 'bold' },
-  translationText: { fontSize: 16, lineHeight: 26, fontWeight: '400' },
-  etymologyBox: { borderRadius: 10, padding: 14, gap: 8, borderWidth: 1 },
-  etymologyLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
-  etymologyText: { fontSize: 13, lineHeight: 20 },
+  loadingText: {
+    fontSize: 16,
+    marginTop: spacing.sm,
+  },
+  loadingHint: {
+    fontSize: 13,
+  },
+  errorIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: borderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorTitle: {
+    fontSize: 18,
+  },
+  errorMsg: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+    marginTop: spacing.sm,
+  },
+  retryText: {
+    fontSize: 14,
+  },
+  successIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  awaitingIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: borderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  awaitingTitle: {
+    fontSize: 18,
+  },
+  awaitingSub: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  translationResult: {
+    gap: spacing.lg,
+  },
+  resultHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  resultTitle: {
+    fontSize: 16,
+  },
+  translationText: {
+    fontSize: 16,
+    lineHeight: 26,
+  },
 });

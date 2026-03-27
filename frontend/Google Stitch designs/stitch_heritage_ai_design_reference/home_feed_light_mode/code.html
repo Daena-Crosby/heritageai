@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Heritage AI - Preserve Your Heritage</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@700;800&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-tint": "#a83900",
+              "surface": "#fff8f1",
+              "tertiary": "#944925",
+              "on-tertiary-fixed": "#360f00",
+              "surface-container-low": "#f9f3eb",
+              "secondary-fixed-dim": "#d4c4b1",
+              "on-primary-fixed-variant": "#802900",
+              "on-surface": "#1e1b17",
+              "on-tertiary-container": "#591f00",
+              "on-secondary-fixed-variant": "#504536",
+              "inverse-surface": "#33302b",
+              "on-surface-variant": "#594139",
+              "surface-container-high": "#eee7df",
+              "secondary-container": "#eeddc9",
+              "on-background": "#1e1b17",
+              "surface-container": "#f4ede5",
+              "on-error-container": "#93000a",
+              "on-secondary-fixed": "#231a0e",
+              "error-container": "#ffdad6",
+              "on-secondary-container": "#6d6151",
+              "error": "#ba1a1a",
+              "outline-variant": "#e2bfb3",
+              "on-primary": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "primary-fixed": "#ffdbcf",
+              "outline": "#8d7167",
+              "on-primary-fixed": "#380d00",
+              "tertiary-fixed": "#ffdbcd",
+              "surface-container-highest": "#e8e1da",
+              "on-primary-container": "#5c1c00",
+              "surface-variant": "#e8e1da",
+              "on-error": "#ffffff",
+              "secondary-fixed": "#f1e0cc",
+              "on-tertiary-fixed-variant": "#76320f",
+              "primary-container": "#ff6b2c",
+              "surface-dim": "#dfd9d1",
+              "tertiary-fixed-dim": "#ffb596",
+              "on-secondary": "#ffffff",
+              "primary-fixed-dim": "#ffb59a",
+              "background": "#fff8f1",
+              "surface-bright": "#fff8f1",
+              "secondary": "#695c4d",
+              "tertiary-container": "#dc8259",
+              "primary": "#a83900",
+              "inverse-on-surface": "#f7f0e8",
+              "inverse-primary": "#ffb59a",
+              "surface-container-lowest": "#ffffff"
+            },
+            fontFamily: {
+              "headline": ["Epilogue"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      body {
+        background-color: #fff8f1;
+        color: #1e1b17;
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body selection:bg-primary-container selection:text-on-primary">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-[#fff8f1]/80 backdrop-blur-xl">
+<div class="flex items-center gap-4">
+<button class="hover:bg-[#f4ede5] transition-colors p-2 rounded-full scale-95 active:duration-100">
+<span class="material-symbols-outlined text-[#a83900]">menu</span>
+</button>
+<span class="text-xl font-bold italic text-[#ff6b2c] font-headline tracking-tighter">Heritage AI</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="hover:bg-[#f4ede5] transition-colors p-2 rounded-full scale-95 active:duration-100">
+<span class="material-symbols-outlined text-[#a83900]">search</span>
+</button>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-7xl mx-auto">
+<!-- Hero Section / Header -->
+<section class="mb-12">
+<h1 class="font-headline text-5xl md:text-6xl font-extrabold text-primary tracking-tight mb-4">
+                Preserve Your Heritage
+            </h1>
+<p class="text-on-surface-variant text-lg max-w-2xl mb-8 leading-relaxed">
+                Voices fade, but stories don't have to. Capture the essence of your culture, your family, and your legacy through AI-enhanced storytelling.
+            </p>
+<button class="inline-flex items-center gap-3 bg-gradient-to-r from-primary to-primary-container text-on-primary px-8 py-4 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform duration-200">
+<span class="material-symbols-outlined">mic</span>
+                Record a Story
+            </button>
+</section>
+<!-- Curated Stories Section -->
+<section>
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6">
+<div>
+<h2 class="font-headline text-3xl font-bold text-on-surface">Curated Stories</h2>
+<p class="text-on-secondary-container mt-1">Handpicked narratives from the global vault.</p>
+</div>
+<!-- Filters/Tabs -->
+<div class="flex bg-surface-container rounded-xl p-1.5 self-start">
+<button class="px-6 py-2 rounded-lg bg-surface-container-lowest text-primary font-bold shadow-sm">Latest</button>
+<button class="px-6 py-2 rounded-lg text-on-secondary-container hover:bg-surface-container-high transition-colors">Archives</button>
+<button class="px-6 py-2 rounded-lg text-on-secondary-container hover:bg-surface-container-high transition-colors">Popular</button>
+</div>
+</div>
+<!-- Bento Grid Stories -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Story 1: Anansi -->
+<article class="md:col-span-8 group relative overflow-hidden bg-surface-container-low rounded-xl flex flex-col md:flex-row shadow-sm hover:shadow-xl transition-all duration-300">
+<div class="md:w-1/2 h-64 md:h-auto relative overflow-hidden">
+<img alt="Anansi Stories Illustration" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="vibrant colorful african tribal mask illustration with intricate geometric patterns and warm glowing background light editorial style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuADqVpKAQBvAEs6G8Js3rS3g8Zm5mlh1suVzdnJQM20ljaRdc3Ial0VrSWPV4WMXjPQu8bIxt41-60JdUcDlm7ltUGZRoI07oNkkoPwYf9dk26DBxCCtumUmemTJLhYDROfZ-F-HxbZxz_jl2CHlA0yEkpx54MdIM9ARI66tvFB399IZZ_JfWncnbr8ILHMqve-kftht9Np7uxUT37s1sWUW4S9aiddGjZebsIAHcnc8bkbwCqwjxbyYpMehicj8wtfDRLn-IPoRnw"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+</div>
+<div class="p-8 md:w-1/2 flex flex-col justify-between">
+<div>
+<div class="flex flex-wrap gap-2 mb-4">
+<span class="bg-secondary-fixed-dim text-on-secondary-fixed px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Folklore</span>
+<span class="bg-secondary-fixed-dim text-on-secondary-fixed px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Jamaican Patois</span>
+</div>
+<h3 class="font-headline text-2xl font-bold text-on-surface group-hover:text-primary transition-colors">Anansi Stories: The Weaver of Wit</h3>
+<p class="text-on-surface-variant mt-3 line-clamp-3">Travel back to the roots of West African folklore with the legendary spider trickster. A collection of oral wisdom passed down through generations.</p>
+</div>
+<div class="mt-6 flex items-center justify-between">
+<div class="flex items-center gap-4 text-on-secondary-container text-sm font-medium">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">favorite</span> 1.2k</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">visibility</span> 4.5k</span>
+</div>
+<button class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary-container transition-colors shadow-lg">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Story 2: Grandma's Recipe -->
+<article class="md:col-span-4 group bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col border border-outline-variant/10">
+<div class="h-48 overflow-hidden rounded-t-xl">
+<img alt="Ackee Recipe" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="close-up of vibrant red and yellow ackee fruit with green leaves in a rustic wooden bowl on a sunlit terrace" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGFAifRLduS1w1KpKxnNAsuaZJJlABrsgvToaCeXTYhQtIgnpfwSQ-WG5FyAytiNUahmVsKn-dqTU91IG9EsSGxmAmNl2FzM7-rzoDH1ES0RNDWMx7s8HxBljTxh2olKuhMts1hE2oiq9NG6zT_ThUKwRaXTFzCwAdn8q8rhHawwQ3kus0lZzcUb6RWYZbP5Ke0X-_eErLGb8XTYDkyF3sNcQc1943BzpKInGP12zK02gAnuW5BIO9Aa9SdnPimSAvzslm7yVLgtA"/>
+</div>
+<div class="p-6 flex-grow flex flex-col">
+<div class="mb-3">
+<span class="bg-secondary-fixed-dim text-on-secondary-fixed px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Recipe</span>
+</div>
+<h3 class="font-headline text-xl font-bold text-on-surface group-hover:text-primary transition-colors">Grandma's Ackee Recipe</h3>
+<p class="text-on-surface-variant mt-2 text-sm line-clamp-2">The secret proportions and the precise timing that makes a Sunday morning feel like home.</p>
+<div class="mt-auto pt-6 flex items-center justify-between border-t border-surface-container-high">
+<div class="flex items-center gap-3 text-on-secondary-container text-xs">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">favorite</span> 842</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">visibility</span> 2.1k</span>
+</div>
+<button class="w-10 h-10 rounded-full bg-surface-container text-primary flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Story 3: Rhythms of Ifé -->
+<article class="md:col-span-4 group bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col border border-outline-variant/10">
+<div class="h-48 overflow-hidden rounded-t-xl">
+<img alt="Traditional Drums" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="close-up of traditional west african djembe drums with intricate carvings in warm cinematic sunlight dusty atmosphere" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzQSNoCrE8baKeE9gZbTpJW6Y5NvIWPqR86Bik4DNnuIbKq1h07ja0biWhC-rpp9we_9Go7gacb0JRBtEWbC0avp_o1XWAG9cm-I702pjzQ9aqjuTh-S_IJE29BrifE6loXzd5h4xb9zrnXCJVLdRt4AKbQ76k5UYvrKBDZ0r7RjEpBu8BDdxUUHIQpppZioDTw_nSYQMwFsswI7SQVRk2bUHtJL5N5ZSh0JFC44MMIPm-jJsV6uBEGgqutFiENjo85p3ApCEoaTM"/>
+</div>
+<div class="p-6 flex-grow flex flex-col">
+<div class="flex flex-wrap gap-2 mb-3">
+<span class="bg-secondary-fixed-dim text-on-secondary-fixed px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Music</span>
+<span class="bg-secondary-fixed-dim text-on-secondary-fixed px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Yoruba</span>
+</div>
+<h3 class="font-headline text-xl font-bold text-on-surface group-hover:text-primary transition-colors">The Rhythms of Ifé</h3>
+<p class="text-on-surface-variant mt-2 text-sm line-clamp-2">Decoding the talking drum's language and the spiritual connection to the ancestors.</p>
+<div class="mt-auto pt-6 flex items-center justify-between border-t border-surface-container-high">
+<div class="flex items-center gap-3 text-on-secondary-container text-xs">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">favorite</span> 1.5k</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">visibility</span> 6.2k</span>
+</div>
+<button class="w-10 h-10 rounded-full bg-surface-container text-primary flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Featured Quote / Aesthetic Break -->
+<article class="md:col-span-8 flex flex-col justify-center bg-primary-container/10 rounded-xl p-12 relative overflow-hidden">
+<div class="absolute -right-20 -bottom-20 opacity-10">
+<span class="material-symbols-outlined text-[300px] text-primary">history_edu</span>
+</div>
+<div class="relative z-10">
+<span class="material-symbols-outlined text-primary text-5xl mb-6">format_quote</span>
+<blockquote class="font-headline text-3xl font-bold text-on-primary-container leading-tight mb-6">
+                            "A people without the knowledge of their past history, origin and culture is like a tree without roots."
+                        </blockquote>
+<cite class="not-italic font-bold text-primary">— Marcus Garvey</cite>
+</div>
+</article>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-[#fff8f1]/80 backdrop-blur-xl rounded-t-2xl shadow-[0_-4px_20px_0_rgba(30,27,23,0.05)]">
+<a class="flex flex-col items-center justify-center bg-[#ff6b2c] text-white rounded-xl p-2 px-4 transition-transform duration-200 active:scale-90" href="#">
+<span class="material-symbols-outlined">home_storage</span>
+<span class="font-medium text-[11px] mt-1 font-label">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#6d6151] p-2 hover:bg-[#f4ede5] rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined">archive</span>
+<span class="font-medium text-[11px] mt-1 font-label">Vault</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#6d6151] p-2 hover:bg-[#f4ede5] rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined">mic</span>
+<span class="font-medium text-[11px] mt-1 font-label">Record</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#6d6151] p-2 hover:bg-[#f4ede5] rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined">colors_spark</span>
+<span class="font-medium text-[11px] mt-1 font-label">Guide</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#6d6151] p-2 hover:bg-[#f4ede5] rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-medium text-[11px] mt-1 font-label">Settings</span>
+</a>
+</nav>
+</body></html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700;800&amp;family=Manrope:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-bright": "#fff8f1",
+              "surface-tint": "#a83900",
+              "on-tertiary-fixed-variant": "#76320f",
+              "outline-variant": "#e2bfb3",
+              "background": "#fff8f1",
+              "on-secondary-fixed-variant": "#504536",
+              "inverse-primary": "#ffb59a",
+              "surface-container": "#f4ede5",
+              "on-error-container": "#93000a",
+              "primary-fixed": "#ffdbcf",
+              "surface-dim": "#dfd9d1",
+              "primary": "#a83900",
+              "tertiary-fixed": "#ffdbcd",
+              "on-tertiary-container": "#591f00",
+              "tertiary-fixed-dim": "#ffb596",
+              "on-tertiary-fixed": "#360f00",
+              "secondary-fixed": "#f1e0cc",
+              "error": "#ba1a1a",
+              "on-secondary-container": "#6d6151",
+              "tertiary-container": "#dc8259",
+              "surface": "#fff8f1",
+              "surface-variant": "#e8e1da",
+              "surface-container-low": "#f9f3eb",
+              "on-background": "#1e1b17",
+              "tertiary": "#944925",
+              "surface-container-highest": "#e8e1da",
+              "inverse-surface": "#33302b",
+              "surface-container-high": "#eee7df",
+              "on-error": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "on-primary": "#ffffff",
+              "primary-fixed-dim": "#ffb59a",
+              "outline": "#8d7167",
+              "on-surface": "#1e1b17",
+              "on-primary-fixed": "#380d00",
+              "on-primary-container": "#5c1c00",
+              "secondary-fixed-dim": "#d4c4b1",
+              "primary-container": "#ff6b2c",
+              "secondary": "#695c4d",
+              "on-secondary": "#ffffff",
+              "secondary-container": "#eeddc9",
+              "on-surface-variant": "#594139",
+              "error-container": "#ffdad6",
+              "on-primary-fixed-variant": "#802900",
+              "on-secondary-fixed": "#231a0e",
+              "inverse-on-surface": "#f7f0e8",
+              "surface-container-lowest": "#ffffff"
+            },
+            fontFamily: {
+              "headline": ["Epilogue"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .editorial-shadow {
+            box-shadow: 0 30px 60px -12px rgba(30, 27, 23, 0.06);
+        }
+        body {
+            background-color: #fff8f1;
+            color: #1e1b17;
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="bg-[#fff8f1]/80 backdrop-blur-xl fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#a83900]">menu</span>
+<h1 class="text-xl font-bold italic text-[#ff6b2c] font-headline tracking-tight">Heritage AI</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#a83900]">search</span>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-5xl mx-auto space-y-12">
+<!-- Profile Hero Section -->
+<section class="relative">
+<div class="flex flex-col md:flex-row items-start md:items-end gap-8">
+<div class="relative group">
+<div class="w-32 h-32 md:w-44 md:h-44 rounded-2xl overflow-hidden editorial-shadow bg-surface-container-high border-4 border-surface-container-lowest">
+<img alt="User Portrait" class="w-full h-full object-cover" data-alt="Close-up portrait of a distinguished older man with a warm smile and grey hair, soft golden sunlight hitting his face in a gallery setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBO3P9wUH3nNN0SL8a-vM8lYiPutK3hIui1P28jBZudk8ABKZVxDjSiajQp9AxfI8GPOeGFfbJuhaQ8PdkiNkbmson__NKlLMfd17khcojq34Jwp2nKJzS3JicLSy1BAQWpFYflxhVo-Lldo5Mj6jWR-__ouCNr2JMdqDTgsmQMmIMnRrK36kf9qw6XAoteE7VGRtYYHPLGuE-xWYxGSFOEcQxxPZ52Zzt65sO5cZs10wl6C782GoaSjGvbzyFiFBZZK7NyA-ZF43M"/>
+</div>
+<div class="absolute -bottom-2 -right-2 bg-primary-container text-on-primary px-3 py-1 rounded-lg text-xs font-bold font-headline tracking-widest shadow-lg">
+                        ADMIN
+                    </div>
+</div>
+<div class="flex-1 space-y-2">
+<h2 class="text-4xl md:text-5xl font-headline font-extrabold tracking-tighter text-on-surface">Elias Thorne</h2>
+<p class="text-on-secondary-container font-medium max-w-md">Chief Archivist of the Thorne Family Collection. Preserving whispers of the past for the digital future.</p>
+<div class="flex flex-wrap gap-4 pt-4">
+<div class="bg-surface-container-low px-4 py-2 rounded-xl flex items-center gap-3">
+<span class="text-primary font-headline font-bold text-2xl">124</span>
+<span class="text-[11px] font-label font-semibold text-secondary uppercase tracking-wider">Stories Preserved</span>
+</div>
+<div class="bg-surface-container-low px-4 py-2 rounded-xl flex items-center gap-3">
+<span class="text-primary font-headline font-bold text-2xl">12k</span>
+<span class="text-[11px] font-label font-semibold text-secondary uppercase tracking-wider">Media Assets</span>
+</div>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="bg-gradient-to-r from-primary to-primary-container text-on-primary px-6 py-3 rounded-lg font-headline font-bold flex items-center gap-2 editorial-shadow hover:scale-95 transition-transform">
+<span class="material-symbols-outlined text-sm">edit</span>
+                        Edit Profile
+                    </button>
+</div>
+</div>
+</section>
+<!-- Bento Grid: Notifications & Settings -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Activity & Notifications (Bento Large) -->
+<div class="md:col-span-8 space-y-6">
+<div class="flex items-center justify-between">
+<h3 class="text-2xl font-headline font-bold text-on-surface">Recent Heritage Activity</h3>
+<button class="text-primary font-headline font-bold text-sm hover:underline">Mark all as read</button>
+</div>
+<div class="space-y-4">
+<!-- Notification Item -->
+<div class="bg-surface-container-low p-5 rounded-xl flex gap-4 items-start hover:bg-surface-container transition-colors group">
+<div class="w-12 h-12 rounded-lg bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed shrink-0">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h4 class="font-headline font-bold text-on-surface">AI Synthesis Complete</h4>
+<span class="text-xs text-secondary-fixed-variant font-medium">2m ago</span>
+</div>
+<p class="text-sm text-on-surface-variant mt-1">The "1924 Paris Summer" collection has been successfully transcribed and categorized using neural patterns.</p>
+</div>
+</div>
+<!-- Notification Item -->
+<div class="bg-surface-container-lowest p-5 rounded-xl flex gap-4 items-start editorial-shadow hover:bg-surface-container transition-colors group">
+<div class="w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center text-on-primary-fixed shrink-0">
+<span class="material-symbols-outlined">history_edu</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h4 class="font-headline font-bold text-on-surface">New Voice Record</h4>
+<span class="text-xs text-secondary-fixed-variant font-medium">1h ago</span>
+</div>
+<p class="text-sm text-on-surface-variant mt-1">Sarah Thorne added a new audio memory: "Grandmother's kitchen on Sundays".</p>
+</div>
+</div>
+<!-- Notification Item -->
+<div class="bg-surface-container-low p-5 rounded-xl flex gap-4 items-start hover:bg-surface-container transition-colors group">
+<div class="w-12 h-12 rounded-lg bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed shrink-0">
+<span class="material-symbols-outlined">verified_user</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h4 class="font-headline font-bold text-on-surface">Vault Security Sync</h4>
+<span class="text-xs text-secondary-fixed-variant font-medium">Yesterday</span>
+</div>
+<p class="text-sm text-on-surface-variant mt-1">Encrypted backup successful. Your heritage assets are securely stored in the Zurich vault node.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Settings Sidebar (Bento Small) -->
+<div class="md:col-span-4 space-y-6">
+<h3 class="text-2xl font-headline font-bold text-on-surface">Settings</h3>
+<div class="bg-surface-container-highest p-6 rounded-xl space-y-2">
+<button class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-low transition-all group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">account_circle</span>
+<span class="font-headline font-bold text-sm">Account Privacy</span>
+</div>
+<span class="material-symbols-outlined text-sm text-outline">chevron_right</span>
+</button>
+<button class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-low transition-all group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">notifications_active</span>
+<span class="font-headline font-bold text-sm">Notifications</span>
+</div>
+<span class="material-symbols-outlined text-sm text-outline">chevron_right</span>
+</button>
+<button class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-low transition-all group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">database</span>
+<span class="font-headline font-bold text-sm">Storage &amp; Data</span>
+</div>
+<span class="material-symbols-outlined text-sm text-outline">chevron_right</span>
+</button>
+<button class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-low transition-all group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">language</span>
+<span class="font-headline font-bold text-sm">Heritage Language</span>
+</div>
+<span class="material-symbols-outlined text-sm text-outline">chevron_right</span>
+</button>
+<div class="pt-4 mt-4 border-t border-outline-variant/30">
+<button class="w-full flex items-center gap-3 p-3 rounded-lg text-error hover:bg-error-container/20 transition-all font-headline font-bold text-sm">
+<span class="material-symbols-outlined">logout</span>
+                            Logout Session
+                        </button>
+</div>
+</div>
+<!-- Heritage Card Visual -->
+<div class="relative h-48 rounded-xl overflow-hidden editorial-shadow group">
+<img alt="Vintage Camera" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="Vintage film camera on a rustic wooden table with soft warm sunbeams coming from a nearby window" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtXswQQUH07s7ofA1Ie5hALkY8JwpouqyVbvqisOGvfmQmWKXMOrFgpFEJ67MMhm39j1pnDRe3_MLORqszTicSs2J1PLlZ13YKF1BNE0u3192DzBq8HkpZD6odP9ivrI2xkXch61KtMyBaXSoIjuepbUOuF1eADqjYxYrRnT_C7VQ8kUYUKsWJSRc2v3XjBUqq1ueapZ00ViIs21bDjzFWkYLRogp184Poc4xr9i2cSfDRcf3OaBI060LKS9YRSfGDhhCDp9veLW4"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-surface/80 to-transparent flex flex-col justify-end p-5">
+<span class="text-white font-headline font-bold text-lg">Heritage Plus</span>
+<p class="text-white/80 text-xs">Unlock infinite vault storage and high-fidelity AI restoration.</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="bg-[#fff8f1]/80 backdrop-blur-xl fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 rounded-t-2xl shadow-[0_-4px_20px_0_rgba(30,27,23,0.05)]">
+<div class="flex flex-col items-center justify-center text-[#6d6151] p-2 hover:bg-[#f4ede5] rounded-xl transition-colors">
+<span class="material-symbols-outlined">home_storage</span>
+<span class="font-label font-medium text-[11px] mt-1">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#6d6151] p-2 hover:bg-[#f4ede5] rounded-xl transition-colors">
+<span class="material-symbols-outlined">archive</span>
+<span class="font-label font-medium text-[11px] mt-1">Vault</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#6d6151] p-2 hover:bg-[#f4ede5] rounded-xl transition-colors">
+<span class="material-symbols-outlined">mic</span>
+<span class="font-label font-medium text-[11px] mt-1">Record</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#6d6151] p-2 hover:bg-[#f4ede5] rounded-xl transition-colors">
+<span class="material-symbols-outlined">colors_spark</span>
+<span class="font-label font-medium text-[11px] mt-1">Guide</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-[#ff6b2c] text-white rounded-xl p-2 px-4 scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label font-medium text-[11px] mt-1">Settings</span>
+</div>
+</nav>
+</body></html>

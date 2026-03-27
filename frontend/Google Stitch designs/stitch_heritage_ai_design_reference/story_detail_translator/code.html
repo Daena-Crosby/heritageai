@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;700;800;900&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#2a170f",
+              "on-secondary": "#372f22",
+              "outline-variant": "#594139",
+              "on-secondary-fixed": "#221a0f",
+              "on-tertiary-fixed-variant": "#5a4137",
+              "secondary-fixed": "#efe0cd",
+              "on-secondary-container": "#c4b6a5",
+              "on-primary-fixed-variant": "#802900",
+              "on-error": "#690005",
+              "on-tertiary-container": "#432c23",
+              "primary-fixed-dim": "#ffb59a",
+              "background": "#18120d",
+              "on-primary-container": "#5c1c00",
+              "surface-container-lowest": "#120d08",
+              "surface-bright": "#3f3831",
+              "surface-container-low": "#201b15",
+              "on-surface": "#ede0d7",
+              "secondary": "#d2c4b2",
+              "surface-tint": "#ffb59a",
+              "on-surface-variant": "#e2bfb3",
+              "tertiary-fixed-dim": "#e3bfb2",
+              "on-error-container": "#ffdad6",
+              "inverse-surface": "#ede0d7",
+              "surface-dim": "#18120d",
+              "on-secondary-fixed-variant": "#4f4538",
+              "surface": "#18120d",
+              "surface-variant": "#3a342d",
+              "error-container": "#93000a",
+              "on-background": "#ede0d7",
+              "surface-container-high": "#2f2923",
+              "inverse-primary": "#a83900",
+              "surface-container": "#251f19",
+              "primary-fixed": "#ffdbcf",
+              "secondary-fixed-dim": "#d2c4b2",
+              "tertiary-fixed": "#ffdbce",
+              "tertiary": "#e3bfb2",
+              "primary-container": "#ff6b2c",
+              "tertiary-container": "#b39286",
+              "outline": "#a98a7f",
+              "on-tertiary": "#422b22",
+              "on-primary": "#5b1b00",
+              "primary": "#ffb59a",
+              "surface-container-highest": "#3a342d",
+              "error": "#ffb4ab",
+              "inverse-on-surface": "#362f29",
+              "secondary-container": "#51483a",
+              "on-primary-fixed": "#380d00"
+            },
+            fontFamily: {
+              "headline": ["Epilogue"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body selection:bg-primary/30">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-stone-50/80 dark:bg-stone-950/80 backdrop-blur-xl">
+<div class="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-stone-800/50 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-orange-400">arrow_back</span>
+</button>
+<h1 class="text-2xl font-black text-orange-600 dark:text-orange-500 italic font-headline tracking-tight">Heritage AI</h1>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-2 rounded-full hover:bg-stone-800/50 transition-colors">
+<span class="material-symbols-outlined text-orange-400">share</span>
+</button>
+<button class="p-2 rounded-full hover:bg-stone-800/50 transition-colors">
+<span class="material-symbols-outlined text-orange-400">bookmark</span>
+</button>
+</div>
+</div>
+</header>
+<main class="pt-20 pb-32 max-w-5xl mx-auto px-6">
+<!-- Story Hero Section -->
+<section class="mt-8 mb-12">
+<div class="relative w-full aspect-[16/9] rounded-[2rem] overflow-hidden shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
+<img class="w-full h-full object-cover" data-alt="vibrant digital illustration of a spider wearing a small hat climbing a lush green tropical tree with a clay pot strapped to its belly, warm golden jungle light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAx6jLHoq9zvSrUBF4iXumpvYTWEaWAMwS_1BG62uxJxISKVtmq763ITSSrzUOvKAT3BnqcW6GSiF9N1icHQXsGy08L8hjy9ya7saWzZn2d6eShwU6_f-5cXPi4S7qAQ0q2gjlcZCW9rUW9wMAIaXk906VUzJ1TpDSE4ptceukBJyYDQhxRPknF1IWuyiWz1moavU-4CNhiU6LTd20IJKCBKBiw1gI7gs5ijMqBlT98bCvrcEw_yEKYbZnfwK55tLgO4BlugicJM-s"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent"></div>
+<div class="absolute bottom-8 left-8 right-8">
+<div class="flex items-center gap-2 mb-3">
+<span class="px-3 py-1 rounded-full bg-primary-container text-on-primary-container text-[11px] font-bold uppercase tracking-wider font-label">Folklore</span>
+<span class="px-3 py-1 rounded-full bg-surface-container-highest text-on-surface-variant text-[11px] font-bold uppercase tracking-wider font-label">West African / Caribbean</span>
+</div>
+<h2 class="text-4xl md:text-6xl font-black font-headline text-on-background tracking-tighter leading-[1.1]">
+                        Anansi and the <br/><span class="text-primary-fixed-dim">Wisdom Pot</span>
+</h2>
+</div>
+</div>
+</section>
+<!-- Translation & Audio Controls -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8 mb-16">
+<!-- Left Column: Story Controls -->
+<div class="md:col-span-4 space-y-6">
+<!-- Translation Toggle -->
+<div class="bg-surface-container-low p-6 rounded-[1.5rem] border border-outline-variant/10">
+<div class="flex items-center justify-between mb-4">
+<span class="font-headline font-bold text-lg">Auto-Translate</span>
+<div class="w-12 h-6 bg-primary-container rounded-full relative cursor-pointer">
+<div class="absolute right-1 top-1 w-4 h-4 bg-on-primary-container rounded-full"></div>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 py-2 rounded-xl bg-orange-100 dark:bg-orange-900/30 text-orange-300 font-bold text-sm">Patois</button>
+<button class="flex-1 py-2 rounded-xl bg-surface-container-highest text-stone-400 font-semibold text-sm">English</button>
+</div>
+</div>
+<!-- Audio Player -->
+<div class="bg-surface-container-low p-6 rounded-[1.5rem] border border-outline-variant/10">
+<span class="block font-headline font-bold text-lg mb-4">Oral Tradition</span>
+<div class="flex items-center gap-4 mb-6">
+<button class="w-14 h-14 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container shadow-lg active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<div class="flex-1 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="w-1/3 h-full bg-primary"></div>
+</div>
+</div>
+<div class="space-y-2">
+<button class="w-full py-3 px-4 rounded-xl border border-outline-variant/20 flex items-center justify-between hover:bg-surface-container-high transition-colors">
+<span class="text-sm font-semibold">Listen in Dialect</span>
+<span class="material-symbols-outlined text-primary text-sm">graphic_eq</span>
+</button>
+<button class="w-full py-3 px-4 rounded-xl border border-outline-variant/20 flex items-center justify-between hover:bg-surface-container-high transition-colors">
+<span class="text-sm font-semibold">Listen in English</span>
+<span class="material-symbols-outlined text-primary text-sm">volume_up</span>
+</button>
+</div>
+</div>
+<!-- Metadata -->
+<div class="p-6 space-y-4">
+<div class="flex items-center gap-4">
+<img class="w-12 h-12 rounded-full object-cover ring-2 ring-primary/20" data-alt="portrait of a dignified elderly man with grey hair and warm eyes, soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAP3c7lahlTYPDLV-R3sEddPPEPhqvEi8U9i_8MUtzSqyE4IrG1Ci3aKHUgaUfG4eyDPRsJNca4TsmLdqjhz9y3CjSOs034kQ7yYWZ_DoDtB7nk_Tey1_hwEHmvk5NMMNYgWQ7GsvOYfUDqoToiRLmA4SnjxqC-A4WiOVvzF-nnIWIZF9aDHep-UxCKid1ouvLcgcSAKeFgnFxnrhRziv02HU-txKitASTSt3obpmIZvEsg1gKZkTIF4nuMIbqL-ayR7m6J1PsRXhA"/>
+<div>
+<span class="block text-xs uppercase tracking-widest text-stone-500 font-bold font-label">Contributor</span>
+<span class="text-on-surface font-bold text-base">Elder Brown</span>
+</div>
+</div>
+<div class="pt-4 border-t border-outline-variant/10">
+<span class="block text-xs uppercase tracking-widest text-stone-500 font-bold font-label mb-2">Preserved On</span>
+<span class="text-on-surface font-semibold">October 14, 2023</span>
+</div>
+<div class="pt-4 border-t border-outline-variant/10">
+<span class="block text-xs uppercase tracking-widest text-stone-500 font-bold font-label mb-2">Cultural Context</span>
+<p class="text-sm text-on-surface-variant leading-relaxed italic">
+                            "A story about the futility of greed and the communal nature of wisdom. Originally from the Ashanti people, preserved through the diaspora."
+                        </p>
+</div>
+</div>
+</div>
+<!-- Right Column: The Reading Experience -->
+<div class="md:col-span-8">
+<div class="bg-surface-container p-8 md:p-12 rounded-[2.5rem] shadow-sm relative overflow-hidden">
+<!-- Text Background Texture -->
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px]"></div>
+<div class="relative z-10 space-y-12">
+<!-- Patois Section -->
+<div class="space-y-6">
+<div class="flex items-center gap-3">
+<span class="w-8 h-[2px] bg-primary"></span>
+<span class="text-primary font-bold tracking-[0.2em] text-xs uppercase">Original Patois</span>
+</div>
+<p class="text-2xl md:text-3xl font-headline font-bold text-on-surface leading-tight">
+                                "Once upon a time, Anansi de spider did tink him smart pass everybody. Him decide say him gwine gather up all de wisdom inna de world and lock it up inna one big clay pot..."
+                            </p>
+<p class="text-lg text-on-surface-variant leading-relaxed">
+                                Him search high, him search low. Him go through de valley and climb up de hill. Every likkle piece a wisdom him find, him pop it inna de pot. When him finish, de pot did full to de brim. Anansi never waan share it wid nobody, so him decide fi hide it pon top a de tallest silk cotton tree inna de forest.
+                            </p>
+</div>
+<!-- English Section -->
+<div class="space-y-6 pt-12 border-t border-outline-variant/10">
+<div class="flex items-center gap-3">
+<span class="w-8 h-[2px] bg-stone-500"></span>
+<span class="text-stone-500 font-bold tracking-[0.2em] text-xs uppercase">English Translation</span>
+</div>
+<p class="text-xl md:text-2xl font-headline text-stone-400 leading-tight">
+                                "Long ago, Anansi the spider believed he was cleverer than anyone else. He decided he would gather all the wisdom in the world and lock it away inside a large clay pot..."
+                            </p>
+<p class="text-lg text-stone-500 leading-relaxed">
+                                He searched high and low. He traveled through valleys and climbed mountains. Every bit of wisdom he found, he placed it inside the pot. When he was finished, the pot was full to the brim. Anansi didn't want to share it with anyone, so he decided to hide it at the top of the tallest silk cotton tree in the forest.
+                            </p>
+</div>
+<!-- Artifact Card (Visual Accent) -->
+<div class="pt-8">
+<div class="bg-surface-container-low p-6 rounded-[1.5rem] flex flex-col md:flex-row gap-8 items-center border border-outline-variant/5">
+<div class="w-full md:w-1/3 -mt-12 md:-mt-0 md:-ml-12 overflow-hidden rounded-2xl shadow-xl rotate-[-3deg]">
+<img class="w-full h-48 object-cover" data-alt="authentic hand-crafted west african earthenware clay pot with intricate geometric patterns against a dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXVfHFFdfLXhzctMA1gz2RtXHFB4fxtusIWVuOk6em18LZdqFkFFcvu1_BZNgIz8tLZ-3HgQzVS-zZcPDdWyReLMHAKEJBDZUEXmhmQM3tTOEIFGMF8o-es2MOcscyBUHaXtNWG9ufStOZR0JFWP4_zPMetUo68DBGZmT7K5OcyzrQArjUZ9cIB1w1Qy-gkbRSGOH578p4wPwNd70Xegkobj5RJ6pReuovrdx0XrqATsV5TcnwpW2JdX0ux2Ri9s4sPVI_SwAel0c"/>
+</div>
+<div class="flex-1">
+<h4 class="font-headline font-bold text-xl mb-2">The Wisdom Pot Artifact</h4>
+<p class="text-sm text-on-surface-variant">In many versions of this tale, the 'pot' represents the heart. The story reminds us that knowledge is heavy when kept for oneself, but light when shared with the tribe.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footnotes / Meanings -->
+<section class="mb-20">
+<h3 class="font-headline font-extrabold text-2xl mb-8 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">auto_stories</span>
+                Cultural Lexicon
+            </h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="bg-surface-container-low p-5 rounded-2xl">
+<span class="text-primary font-bold block mb-1">"Smart pass"</span>
+<p class="text-sm text-on-surface-variant">To be more clever or cunning than another.</p>
+</div>
+<div class="bg-surface-container-low p-5 rounded-2xl">
+<span class="text-primary font-bold block mb-1">"Silk Cotton Tree"</span>
+<p class="text-sm text-on-surface-variant">A giant, sacred tree often associated with spirits in Caribbean folklore.</p>
+</div>
+<div class="bg-surface-container-low p-5 rounded-2xl">
+<span class="text-primary font-bold block mb-1">"Gwine"</span>
+<p class="text-sm text-on-surface-variant">Going to; a future tense marker in Jamaican Patois.</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-8 pt-4 bg-stone-50/90 dark:bg-stone-950/90 backdrop-blur-2xl rounded-t-[2rem] z-50 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
+<div class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-2 opacity-70 hover:opacity-100 hover:text-orange-500 transition-all cursor-pointer">
+<span class="material-symbols-outlined mb-1">home_storage</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-2xl px-5 py-2 scale-105 transition-all cursor-pointer">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider">Vault</span>
+</div>
+<div class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-2 opacity-70 hover:opacity-100 hover:text-orange-500 transition-all cursor-pointer">
+<span class="material-symbols-outlined mb-1">mic</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider">Record</span>
+</div>
+<div class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-2 opacity-70 hover:opacity-100 hover:text-orange-500 transition-all cursor-pointer">
+<span class="material-symbols-outlined mb-1">temp_preferences_custom</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider">Guide</span>
+</div>
+<div class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-2 opacity-70 hover:opacity-100 hover:text-orange-500 transition-all cursor-pointer">
+<span class="material-symbols-outlined mb-1">settings</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider">Settings</span>
+</div>
+</nav>
+</body></html>

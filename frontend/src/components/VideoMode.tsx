@@ -5,11 +5,15 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  ScrollView,
   Image,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { Audio } from 'expo-av';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../theme/ThemeContext';
+import { fonts } from '../theme/fonts';
+import { spacing, borderRadius, gradients } from '../theme/colors';
 import { Story, getProcessingStatus, ProcessingJob } from '../services/api';
 
 interface VideoModeProps {
@@ -17,15 +21,16 @@ interface VideoModeProps {
 }
 
 const STEP_LABELS: Record<string, string> = {
-  transcription: 'Transcribing audio...',
-  translation: 'Translating to English...',
-  subtitles: 'Generating subtitles...',
-  themes: 'Detecting themes...',
-  illustrations: 'Creating illustrations...',
-  video: 'Assembling video...',
+  transcription: 'Transcribing audio',
+  translation: 'Translating to English',
+  subtitles: 'Generating subtitles',
+  themes: 'Detecting themes',
+  illustrations: 'Creating illustrations',
+  video: 'Assembling video',
 };
 
 export const VideoMode: React.FC<VideoModeProps> = ({ story }) => {
+  const { colors: C } = useTheme();
   const videoRef = useRef<Video>(null);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -40,7 +45,6 @@ export const VideoMode: React.FC<VideoModeProps> = ({ story }) => {
   const subtitles = translation?.subtitles || [];
   const firstIllustration = story.illustrations?.[0]?.image_url;
 
-  // Poll processing status until video is ready
   const startPolling = useCallback(() => {
     if (pollingRef.current) return;
     pollingRef.current = setInterval(async () => {
@@ -62,19 +66,16 @@ export const VideoMode: React.FC<VideoModeProps> = ({ story }) => {
 
   useEffect(() => {
     const init = async () => {
-      // If video already exists, no need to poll
       if (videoFile) {
         setLoading(false);
         return;
       }
-      // Check processing status
       try {
         const job = await getProcessingStatus(story.id);
         setProcessing(job);
         if (job.status === 'completed' || job.status === 'failed') {
           setLoading(false);
         } else {
-          // Still processing — start polling and load audio for now
           startPolling();
           await loadAudio();
         }
@@ -127,33 +128,39 @@ export const VideoMode: React.FC<VideoModeProps> = ({ story }) => {
     }
   };
 
-  // ============================
-  // Loading / processing state
-  // ============================
+  // Loading state
   if (loading) {
     const step = processing?.current_step;
     const pct = processing?.progress_pct ?? 0;
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#8B4513" />
-        <Text style={styles.processingLabel}>
-          {step ? STEP_LABELS[step] ?? 'Processing...' : 'Loading...'}
+      <View style={[styles.centerContainer, { backgroundColor: C.surfaceContainer }]}>
+        <View style={[styles.loadingIcon, { backgroundColor: C.orangeGlow }]}>
+          <ActivityIndicator size="large" color={C.orange} />
+        </View>
+        <Text style={[styles.loadingTitle, { color: C.text, fontFamily: fonts.manrope.semibold }]}>
+          {step ? STEP_LABELS[step] ?? 'Processing' : 'Loading'}
         </Text>
         {pct > 0 && (
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${pct}%` as any }]} />
+          <View style={[styles.progressBar, { backgroundColor: C.surfaceContainerHigh }]}>
+            <LinearGradient
+              colors={gradients.primary}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[styles.progressFill, { width: `${pct}%` }]}
+            />
           </View>
         )}
+        <Text style={[styles.loadingHint, { color: C.textMuted, fontFamily: fonts.manrope.regular }]}>
+          This may take a few moments
+        </Text>
       </View>
     );
   }
 
-  // ============================
-  // Video ready — native player
-  // ============================
+  // Video ready
   if (videoFile) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.videoContainer, { backgroundColor: C.surfaceContainer }]}>
         <Video
           ref={videoRef}
           source={{ uri: videoFile.file_url }}
@@ -164,203 +171,203 @@ export const VideoMode: React.FC<VideoModeProps> = ({ story }) => {
             if (status.isLoaded) setIsPlaying(status.isPlaying);
           }}
         />
-        {translation && (
-          <ScrollView style={styles.infoContainer}>
-            <Text style={styles.infoTitle}>Story Translation</Text>
-            <Text style={styles.infoText}>{translation.translated_text}</Text>
-          </ScrollView>
-        )}
       </View>
     );
   }
 
-  // ============================
-  // Video not yet ready — audio + illustration + subtitles
-  // ============================
+  // Audio-only mode
   const showError = processing?.status === 'failed';
 
   return (
-    <View style={styles.container}>
-      <View style={styles.illustrationContainer}>
-        {firstIllustration ? (
-          <Image
-            source={{ uri: firstIllustration }}
-            style={styles.illustration}
-            resizeMode="contain"
-          />
-        ) : (
-          <View style={styles.illustrationPlaceholder}>
-            <Text style={styles.placeholderIcon}>🎶</Text>
+    <View style={styles.audioContainer}>
+      {/* Audio Player Card */}
+      <View style={[styles.playerCard, { backgroundColor: C.surfaceContainer }]}>
+        {/* Illustration */}
+        <View style={[styles.artworkContainer, { backgroundColor: C.surfaceContainerHigh }]}>
+          {firstIllustration ? (
+            <Image
+              source={{ uri: firstIllustration }}
+              style={styles.artwork}
+              resizeMode="cover"
+            />
+          ) : (
+            <Ionicons name="musical-notes" size={48} color={C.textMuted} />
+          )}
+
+          {currentSubtitle ? (
+            <View style={styles.subtitleOverlay}>
+              <Text style={[styles.subtitleText, { fontFamily: fonts.manrope.medium }]}>
+                {currentSubtitle}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+
+        {/* Processing Badge */}
+        {processing?.status === 'processing' && (
+          <View style={[styles.processingBadge, { backgroundColor: C.surfaceContainerHigh }]}>
+            <ActivityIndicator size="small" color={C.orange} />
+            <Text style={[styles.processingBadgeText, { color: C.text, fontFamily: fonts.manrope.medium }]}>
+              {processing.current_step ? STEP_LABELS[processing.current_step] : 'Video generating'}
+            </Text>
           </View>
         )}
 
-        {currentSubtitle ? (
-          <View style={styles.subtitleOverlay}>
-            <Text style={styles.subtitleText}>{currentSubtitle}</Text>
+        {/* Error Badge */}
+        {showError && (
+          <View style={[styles.errorBadge, { backgroundColor: `${C.error}20` }]}>
+            <Ionicons name="warning" size={16} color={C.error} />
+            <Text style={[styles.errorBadgeText, { color: C.error, fontFamily: fonts.manrope.medium }]}>
+              Video generation failed — playing audio
+            </Text>
           </View>
-        ) : null}
+        )}
 
-        {processing?.status === 'processing' && (
-          <View style={styles.processingBadge}>
-            <ActivityIndicator size="small" color="#FFF" />
-            <Text style={styles.processingBadgeText}>
-              {processing.current_step ? STEP_LABELS[processing.current_step] ?? 'Processing...' : 'Video generating...'}
+        {/* Play Button */}
+        {audioFile && (
+          <TouchableOpacity onPress={togglePlayback} activeOpacity={0.9}>
+            <LinearGradient
+              colors={gradients.primary}
+              style={styles.playButton}
+            >
+              <Ionicons
+                name={isPlaying ? 'pause' : 'play'}
+                size={28}
+                color="#FFF"
+                style={isPlaying ? {} : { marginLeft: 4 }}
+              />
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
+
+        {/* No Audio */}
+        {!audioFile && (
+          <View style={styles.noAudio}>
+            <Text style={[styles.noAudioText, { color: C.textMuted, fontFamily: fonts.manrope.medium }]}>
+              No audio available for this story
             </Text>
           </View>
         )}
       </View>
-
-      {showError && (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorBannerText}>Video generation failed — playing audio only.</Text>
-        </View>
-      )}
-
-      {audioFile && (
-        <View style={styles.controls}>
-          <TouchableOpacity
-            style={styles.playButton}
-            onPress={togglePlayback}
-          >
-            <Text style={styles.playButtonText}>
-              {isPlaying ? '⏸  Pause' : '▶  Play'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {translation && (
-        <ScrollView style={styles.infoContainer}>
-          <Text style={styles.infoTitle}>Story Translation</Text>
-          <Text style={styles.infoText}>{translation.translated_text}</Text>
-        </ScrollView>
-      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
+  // Loading State
   centerContainer: {
-    flex: 1,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xxl,
+    alignItems: 'center',
+    gap: spacing.lg,
+  },
+  loadingIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: borderRadius.xl,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
-    gap: 16,
   },
-  processingLabel: {
-    color: '#CCC',
-    fontSize: 15,
-    marginTop: 8,
+  loadingTitle: {
+    fontSize: 18,
+  },
+  loadingHint: {
+    fontSize: 13,
   },
   progressBar: {
-    width: '60%',
+    width: '80%',
     height: 6,
-    backgroundColor: '#333',
     borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#8B4513',
     borderRadius: 3,
+  },
+  // Video Mode
+  videoContainer: {
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+    aspectRatio: 16 / 9,
   },
   video: {
     flex: 1,
-    backgroundColor: '#000',
   },
-  illustrationContainer: {
-    flex: 1,
-    backgroundColor: '#1a1a1a',
+  // Audio Mode
+  audioContainer: {},
+  playerCard: {
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.lg,
+  },
+  artworkContainer: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: borderRadius.xl,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+    position: 'relative',
   },
-  illustration: {
+  artwork: {
     width: '100%',
     height: '100%',
   },
-  illustrationPlaceholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  placeholderIcon: {
-    fontSize: 80,
-  },
   subtitleOverlay: {
     position: 'absolute',
-    bottom: 20,
-    left: 16,
-    right: 16,
+    bottom: spacing.lg,
+    left: spacing.lg,
+    right: spacing.lg,
     backgroundColor: 'rgba(0,0,0,0.75)',
-    padding: 12,
-    borderRadius: 8,
+    padding: spacing.lg,
+    borderRadius: borderRadius.lg,
   },
   subtitleText: {
     color: '#FFF',
-    fontSize: 17,
+    fontSize: 16,
     textAlign: 'center',
-    fontWeight: '500',
     lineHeight: 24,
   },
   processingBadge: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(139,69,19,0.9)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
   },
   processingBadgeText: {
-    color: '#FFF',
-    fontSize: 12,
-  },
-  errorBanner: {
-    backgroundColor: '#B71C1C',
-    padding: 10,
-    alignItems: 'center',
-  },
-  errorBannerText: {
-    color: '#FFF',
     fontSize: 13,
   },
-  controls: {
-    padding: 20,
-    backgroundColor: '#1a1a1a',
+  errorBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.lg,
+  },
+  errorBadgeText: {
+    fontSize: 13,
   },
   playButton: {
-    backgroundColor: '#8B4513',
-    paddingHorizontal: 48,
-    paddingVertical: 14,
-    borderRadius: 8,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#FF6B2C',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  playButtonText: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: 'bold',
+  noAudio: {
+    padding: spacing.lg,
   },
-  infoContainer: {
-    maxHeight: 180,
-    padding: 16,
-    backgroundColor: '#1a1a1a',
-  },
-  infoTitle: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  infoText: {
-    color: '#CCC',
+  noAudioText: {
     fontSize: 14,
-    lineHeight: 21,
+    textAlign: 'center',
   },
 });

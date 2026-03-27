@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
   StatusBar,
   Alert,
   KeyboardAvoidingView,
@@ -13,8 +10,24 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  useFonts,
+  Epilogue_400Regular,
+  Epilogue_500Medium,
+  Epilogue_600SemiBold,
+  Epilogue_700Bold,
+  Epilogue_800ExtraBold,
+} from '@expo-google-fonts/epilogue';
+import {
+  Manrope_400Regular,
+  Manrope_500Medium,
+  Manrope_600SemiBold,
+  Manrope_700Bold,
+  Manrope_800ExtraBold,
+} from '@expo-google-fonts/manrope';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
-import { Sidebar, AppScreen } from './src/components/Sidebar';
+import { BottomNavBar, AppScreen } from './src/components/BottomNavBar';
+import { TopAppBar } from './src/components/TopAppBar';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { DialectsScreen } from './src/screens/DialectsScreen';
 import { HeritageVaultScreen } from './src/screens/HeritageVaultScreen';
@@ -27,15 +40,15 @@ import { AdminScreen } from './src/screens/AdminScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { getAccessToken, attachAuthInterceptor, getMyProfile, logout } from './src/services/auth';
 
-const SCREEN_LABELS: Record<AppScreen, string> = {
-  home: 'HOME NAVIGATOR',
-  dialects: 'TRANSLATE NAVIGATOR',
-  vault: 'LIBRARY NAVIGATOR',
-  guide: 'GUIDE NAVIGATOR',
-  record: 'CONTRIBUTE NAVIGATOR',
-  moderation: 'MODERATION CENTER',
-  admin: 'ADMIN PANEL',
-  profile: 'MY PROFILE',
+const SCREEN_TITLES: Record<AppScreen, string | null> = {
+  home: null, // Shows logo
+  dialects: 'Dialect Translator',
+  vault: 'Heritage Vault',
+  guide: 'Cultural Guide',
+  record: 'Record Story',
+  moderation: 'Moderation',
+  admin: 'Admin Panel',
+  profile: 'My Profile',
 };
 
 // Inner component — can safely call useTheme() since it sits inside ThemeProvider
@@ -131,6 +144,7 @@ function AppContent() {
             userEmail={user?.email}
             onSignOut={handleSignOut}
             onStorySelect={setSelectedStoryId}
+            onNavigate={handleNavigate}
           />
         );
     }
@@ -164,49 +178,71 @@ function AppContent() {
 
   // ── Main layout ───────────────────────────────────
   return (
-    <SafeAreaView style={[styles.root, { backgroundColor: C.bg }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.sidebar} />
-      <View style={styles.layout}>
-        <Sidebar
+    <View style={[styles.root, { backgroundColor: C.bg }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
+
+      {/* Top App Bar */}
+      <TopAppBar
+        title={SCREEN_TITLES[activeScreen] ?? undefined}
+        onProfilePress={() => {
+          if (user) {
+            handleNavigate('profile');
+          } else {
+            handleSignIn();
+          }
+        }}
+        onSearchPress={handleSearch}
+        onNotificationPress={handleNotifications}
+        showBackButton={!!selectedStoryId}
+        onBackPress={() => setSelectedStoryId(null)}
+        user={user}
+      />
+
+      {/* Screen content */}
+      <KeyboardAvoidingView
+        style={styles.screenArea}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={insets.top + 60}
+      >
+        {renderContent()}
+      </KeyboardAvoidingView>
+
+      {/* Bottom Navigation Bar */}
+      {!selectedStoryId && (
+        <BottomNavBar
           activeScreen={activeScreen}
           onNavigate={handleNavigate}
           user={user}
-          onSignIn={handleSignIn}
-          onSignOut={handleSignOut}
         />
-
-        <View style={styles.main}>
-          {/* Top bar */}
-          <View style={[styles.topBar, { backgroundColor: C.sidebar, borderBottomColor: C.border }]}>
-            <Text style={[styles.topBarLabel, { color: C.textMuted }]}>
-              {SCREEN_LABELS[activeScreen]}
-            </Text>
-            <View style={styles.topBarRight}>
-              <TouchableOpacity style={styles.topBarIcon} onPress={handleNotifications}>
-                <Ionicons name="notifications-outline" size={18} color={C.textSub} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.topBarIcon} onPress={handleSearch}>
-                <Ionicons name="search-outline" size={18} color={C.textSub} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Screen content — KAV here uses the real safe-area inset so the
-              keyboard offset is exact on every iPhone model */}
-          <KeyboardAvoidingView
-            style={styles.screenArea}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={insets.top + 52}
-          >
-            {renderContent()}
-          </KeyboardAvoidingView>
-        </View>
-      </View>
-    </SafeAreaView>
+      )}
+    </View>
   );
 }
 
 export default function App() {
+  // Load custom fonts
+  const [fontsLoaded] = useFonts({
+    Epilogue_400Regular,
+    Epilogue_500Medium,
+    Epilogue_600SemiBold,
+    Epilogue_700Bold,
+    Epilogue_800ExtraBold,
+    Manrope_400Regular,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
+    Manrope_800ExtraBold,
+  });
+
+  // Show loading screen while fonts are loading
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0A0603' }}>
+        <ActivityIndicator size="large" color="#FF6B2C" />
+      </View>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <ThemeProvider>
@@ -231,40 +267,6 @@ const styles = StyleSheet.create({
   },
   root: {
     flex: 1,
-  },
-  layout: {
-    flex: 1,
-    flexDirection: 'row',
-  },
-  main: {
-    flex: 1,
-    flexDirection: 'column',
-    overflow: 'hidden',
-  },
-  topBar: {
-    height: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-  },
-  topBarLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.5,
-  },
-  topBarRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  topBarIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   screenArea: {
     flex: 1,

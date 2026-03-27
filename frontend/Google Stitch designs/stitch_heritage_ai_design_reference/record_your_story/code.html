@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Heritage AI - Record Story</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;700;800;900&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-fixed": "#2a170f",
+                        "on-secondary": "#372f22",
+                        "outline-variant": "#594139",
+                        "on-secondary-fixed": "#221a0f",
+                        "on-tertiary-fixed-variant": "#5a4137",
+                        "secondary-fixed": "#efe0cd",
+                        "on-secondary-container": "#c4b6a5",
+                        "on-primary-fixed-variant": "#802900",
+                        "on-error": "#690005",
+                        "on-tertiary-container": "#432c23",
+                        "primary-fixed-dim": "#ffb59a",
+                        "background": "#18120d",
+                        "on-primary-container": "#5c1c00",
+                        "surface-container-lowest": "#120d08",
+                        "surface-bright": "#3f3831",
+                        "surface-container-low": "#201b15",
+                        "on-surface": "#ede0d7",
+                        "secondary": "#d2c4b2",
+                        "surface-tint": "#ffb59a",
+                        "on-surface-variant": "#e2bfb3",
+                        "tertiary-fixed-dim": "#e3bfb2",
+                        "on-error-container": "#ffdad6",
+                        "inverse-surface": "#ede0d7",
+                        "surface-dim": "#18120d",
+                        "on-secondary-fixed-variant": "#4f4538",
+                        "surface": "#18120d",
+                        "surface-variant": "#3a342d",
+                        "error-container": "#93000a",
+                        "on-background": "#ede0d7",
+                        "surface-container-high": "#2f2923",
+                        "inverse-primary": "#a83900",
+                        "surface-container": "#251f19",
+                        "primary-fixed": "#ffdbcf",
+                        "secondary-fixed-dim": "#d2c4b2",
+                        "tertiary-fixed": "#ffdbce",
+                        "tertiary": "#e3bfb2",
+                        "primary-container": "#ff6b2c",
+                        "tertiary-container": "#b39286",
+                        "outline": "#a98a7f",
+                        "on-tertiary": "#422b22",
+                        "on-primary": "#5b1b00",
+                        "primary": "#ffb59a",
+                        "surface-container-highest": "#3a342d",
+                        "error": "#ffb4ab",
+                        "inverse-on-surface": "#362f29",
+                        "secondary-container": "#51483a",
+                        "on-primary-fixed": "#380d00"
+                    },
+                    fontFamily: {
+                        "headline": ["Epilogue"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-heritage-gradient {
+            background: linear-gradient(135deg, #ffb59a 0%, #ff6b2c 100%);
+        }
+        .sunken-shadow {
+            box-shadow: 0 40px 60px -20px rgba(56, 13, 0, 0.08);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body selection:bg-primary-container selection:text-on-primary-container min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-stone-50/80 dark:bg-stone-950/80 backdrop-blur-xl">
+<div class="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="p-2 text-orange-600 dark:text-orange-400 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-colors active:scale-95 duration-200 ease-in-out rounded-full">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="text-2xl font-black text-orange-600 dark:text-orange-500 italic font-['Epilogue'] tracking-tight">Heritage AI</h1>
+</div>
+<button class="p-2 text-orange-600 dark:text-orange-400 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-colors active:scale-95 duration-200 ease-in-out rounded-full">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+</header>
+<main class="pt-24 pb-40 px-6 max-w-xl mx-auto flex flex-col items-center min-h-screen">
+<!-- Tab Selector -->
+<div class="w-full flex p-1 bg-surface-container rounded-2xl mb-12 sunken-shadow">
+<button class="flex-1 py-3 px-2 rounded-xl text-orange-700 dark:text-orange-300 bg-orange-100 dark:bg-orange-900/30 font-bold text-sm tracking-wide transition-all">
+                Record Audio
+            </button>
+<button class="flex-1 py-3 px-2 rounded-xl text-stone-500 dark:text-stone-400 font-semibold text-sm tracking-wide hover:text-orange-500 dark:hover:text-orange-300 transition-colors">
+                Type Story
+            </button>
+<button class="flex-1 py-3 px-2 rounded-xl text-stone-500 dark:text-stone-400 font-semibold text-sm tracking-wide hover:text-orange-500 dark:hover:text-orange-300 transition-colors">
+                Upload Document
+            </button>
+</div>
+<!-- Main Recording Interface -->
+<div class="flex-1 flex flex-col items-center justify-center w-full">
+<div class="relative group">
+<!-- Outer Pulse Rings -->
+<div class="absolute inset-0 bg-primary/20 rounded-full scale-150 blur-3xl opacity-30 group-hover:opacity-50 transition-opacity"></div>
+<div class="absolute inset-0 bg-primary-container/10 rounded-full scale-110 animate-pulse"></div>
+<!-- Primary Record Button -->
+<button class="relative w-56 h-56 rounded-full bg-heritage-gradient shadow-2xl flex flex-col items-center justify-center gap-2 active:scale-90 transition-transform duration-300 overflow-hidden">
+<span class="material-symbols-outlined text-6xl text-on-primary-container" style="font-variation-settings: 'FILL' 1;">mic</span>
+<span class="font-headline font-bold text-on-primary-container text-lg">Tap to Record</span>
+</button>
+</div>
+<div class="mt-12 text-center space-y-2">
+<p class="text-on-surface-variant font-medium text-lg">Your voice is history.</p>
+<p class="text-outline text-sm font-label uppercase tracking-[0.2em]">00:00 / 10:00</p>
+</div>
+</div>
+<!-- Cultural Guide AI Prompt -->
+<div class="w-full mt-16">
+<div class="bg-surface-container-low p-6 rounded-[2rem] flex items-start gap-4 sunken-shadow relative overflow-hidden">
+<!-- Subtle Gradient Accent -->
+<div class="absolute top-0 left-0 w-1 h-full bg-primary-container"></div>
+<div class="shrink-0 w-12 h-12 rounded-2xl bg-tertiary-container/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary-fixed-dim" style="font-variation-settings: 'FILL' 1;">temp_preferences_custom</span>
+</div>
+<div class="space-y-3">
+<p class="text-sm font-label font-bold text-primary tracking-widest uppercase">Cultural Guide</p>
+<p class="text-on-surface font-body leading-relaxed text-lg italic">
+                        "Tell us about your favorite childhood meal... Who used to make it for you?"
+                    </p>
+<div class="flex gap-2">
+<button class="px-4 py-2 bg-surface-container-highest rounded-full text-xs font-bold text-on-surface-variant hover:bg-surface-variant transition-colors">
+                            Next Prompt
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-8 pt-4 bg-stone-50/90 dark:bg-stone-950/90 backdrop-blur-2xl rounded-t-[2rem] z-50 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
+<button class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-2 opacity-70 hover:opacity-100 hover:text-orange-500 dark:hover:text-orange-300 transition-all">
+<span class="material-symbols-outlined mb-1">home_storage</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-2 opacity-70 hover:opacity-100 hover:text-orange-500 dark:hover:text-orange-300 transition-all">
+<span class="material-symbols-outlined mb-1">auto_stories</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider">Vault</span>
+</button>
+<!-- ACTIVE TAB -->
+<button class="flex flex-col items-center justify-center bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-2xl px-5 py-2 scale-105 transition-all">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">mic</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider">Record</span>
+</button>
+<button class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-2 opacity-70 hover:opacity-100 hover:text-orange-500 dark:hover:text-orange-300 transition-all">
+<span class="material-symbols-outlined mb-1">temp_preferences_custom</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider">Guide</span>
+</button>
+<button class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-2 opacity-70 hover:opacity-100 hover:text-orange-500 dark:hover:text-orange-300 transition-all">
+<span class="material-symbols-outlined mb-1">settings</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider">Settings</span>
+</button>
+</nav>
+<!-- Decoration Element (Dusty Grain Overlay) -->
+<div class="fixed inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay bg-repeat" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD9iPD7hz4v1Oc_6516sluQS_LBFBaBFyFhxeW3j5VmkqL8OQXtcei2JdBwoaz1bWu6Ypl7zfPemDI53DEkcIrJZQ53MoiOOsWISInsYssABbQfk_cohfj3P4DfYfOCvbmbpyoraXQDcTPLkoI36Y36EQq9uCJb2qZ_UbzMj_UrZ6c2DJAXEbSfMjCgu9GQfPcuQGTUsgMifWjHUNQnx4aExR-XUReey3ws3EgRuqDnsNn5EcPRGkMorpjO-U7T4gTOs61G4r_LEow');">
+</div>
+</body></html>

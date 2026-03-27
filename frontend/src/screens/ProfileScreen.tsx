@@ -9,36 +9,35 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
+import { fonts } from '../theme/fonts';
+import { spacing, borderRadius, gradients } from '../theme/colors';
 import { getMyStories, updateMyProfile, Story, ModerationStatus } from '../services/api';
 import { getMyProfile } from '../services/auth';
+import { AppScreen } from '../components/BottomNavBar';
 
 interface ProfileScreenProps {
   userId: string;
   userEmail?: string;
   onSignOut: () => void;
   onStorySelect: (id: string) => void;
+  onNavigate?: (screen: AppScreen) => void;
 }
 
 type Role = 'user' | 'moderator' | 'admin';
 
-const ROLE_COLOR: Record<Role, string> = {
-  user:      '#4A9EF5',
-  moderator: '#A855F7',
-  admin:     '#F5A623',
+const ROLE_CONFIG: Record<Role, { color: string; label: string; icon: keyof typeof Ionicons.glyphMap }> = {
+  user:      { color: '#4A9EF5', label: 'Member', icon: 'person' },
+  moderator: { color: '#A855F7', label: 'Moderator', icon: 'shield-checkmark' },
+  admin:     { color: '#F5A623', label: 'Administrator', icon: 'star' },
 };
 
-const ROLE_LABEL: Record<Role, string> = {
-  user:      'Member',
-  moderator: 'Moderator',
-  admin:     'Administrator',
-};
-
-const STATUS_COLOR: Record<ModerationStatus, string> = {
-  approved: '#27AE60',
-  pending:  '#F5A623',
-  rejected: '#C0392B',
+const STATUS_CONFIG: Record<ModerationStatus, { color: string; icon: keyof typeof Ionicons.glyphMap }> = {
+  approved: { color: '#27AE60', icon: 'checkmark-circle' },
+  pending:  { color: '#F5A623', icon: 'time' },
+  rejected: { color: '#C0392B', icon: 'close-circle' },
 };
 
 function memberDuration(createdAt: string): string {
@@ -54,7 +53,7 @@ function memberDuration(createdAt: string): string {
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
-    year: 'numeric', month: 'long', day: 'numeric',
+    year: 'numeric', month: 'short', day: 'numeric',
   });
 }
 
@@ -71,6 +70,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   userEmail,
   onSignOut,
   onStorySelect,
+  onNavigate,
 }) => {
   const { colors: C } = useTheme();
 
@@ -78,7 +78,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [stories, setStories]   = useState<Story[]>([]);
   const [loading, setLoading]   = useState(true);
 
-  // Edit state
   const [editing, setEditing]         = useState(false);
   const [draftName, setDraftName]     = useState('');
   const [draftBio, setDraftBio]       = useState('');
@@ -132,7 +131,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   }
 
   const role        = (profile?.role ?? 'user') as Role;
-  const roleColor   = ROLE_COLOR[role] ?? C.orange;
+  const roleConfig  = ROLE_CONFIG[role];
   const emailFallback = userEmail ? userEmail.split('@')[0] : 'Archivist';
   const displayName = profile?.display_name || emailFallback;
   const avatarText  = initials(displayName) || '?';
@@ -140,6 +139,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   const approvedCount = stories.filter(s => s.moderation_status === 'approved').length;
   const pendingCount  = stories.filter(s => s.moderation_status === 'pending').length;
+  const totalHours    = Math.round(stories.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / 3600 * 10) / 10;
 
   return (
     <ScrollView
@@ -148,16 +148,30 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
-      {/* ── Avatar & name ── */}
-      <View style={[styles.heroCard, { backgroundColor: C.surface, borderColor: C.border }]}>
-        <View style={[styles.avatar, { backgroundColor: roleColor + '22', borderColor: roleColor }]}>
-          <Text style={[styles.avatarText, { color: roleColor }]}>{avatarText}</Text>
+      {/* Profile Header Card */}
+      <View style={[styles.profileCard, { backgroundColor: C.surfaceContainer }]}>
+        {/* Avatar */}
+        <View style={styles.avatarContainer}>
+          <LinearGradient
+            colors={gradients.primary}
+            style={styles.avatarGradient}
+          >
+            <View style={[styles.avatar, { backgroundColor: C.surfaceContainer }]}>
+              <Text style={[styles.avatarText, { color: C.orange, fontFamily: fonts.epilogue.bold }]}>
+                {avatarText}
+              </Text>
+            </View>
+          </LinearGradient>
+          {/* Role Badge */}
+          <View style={[styles.roleBadge, { backgroundColor: roleConfig.color }]}>
+            <Ionicons name={roleConfig.icon} size={12} color="#FFF" />
+          </View>
         </View>
 
         {editing ? (
-          <View style={styles.editFields}>
+          <View style={styles.editForm}>
             <TextInput
-              style={[styles.nameInput, { backgroundColor: C.surfaceAlt, borderColor: C.border, color: C.text }]}
+              style={[styles.nameInput, { backgroundColor: C.surfaceContainerHigh, color: C.text, fontFamily: fonts.manrope.medium }]}
               value={draftName}
               onChangeText={setDraftName}
               placeholder="Display name"
@@ -165,7 +179,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               maxLength={50}
             />
             <TextInput
-              style={[styles.bioInput, { backgroundColor: C.surfaceAlt, borderColor: C.border, color: C.text }]}
+              style={[styles.bioInput, { backgroundColor: C.surfaceContainerHigh, color: C.text, fontFamily: fonts.manrope.regular }]}
               value={draftBio}
               onChangeText={setDraftBio}
               placeholder="Write a short bio..."
@@ -175,48 +189,62 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             />
             <View style={styles.editActions}>
               <TouchableOpacity
-                style={[styles.editBtn, { backgroundColor: C.surfaceAlt, borderColor: C.border }]}
+                style={[styles.editBtn, { backgroundColor: C.surfaceContainerHigh }]}
                 onPress={handleCancelEdit}
                 disabled={saving}
               >
-                <Text style={[styles.editBtnText, { color: C.textSub }]}>Cancel</Text>
+                <Text style={[styles.editBtnText, { color: C.textSub, fontFamily: fonts.manrope.semibold }]}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.editBtn, { backgroundColor: C.orange }]}
                 onPress={handleSave}
                 disabled={saving}
+                activeOpacity={0.9}
               >
-                {saving
-                  ? <ActivityIndicator size="small" color="#FFF" />
-                  : <Text style={[styles.editBtnText, { color: '#FFF' }]}>Save</Text>
-                }
+                <LinearGradient
+                  colors={gradients.primary}
+                  style={styles.saveBtn}
+                >
+                  {saving ? (
+                    <ActivityIndicator size="small" color="#FFF" />
+                  ) : (
+                    <Text style={[styles.saveBtnText, { fontFamily: fonts.manrope.semibold }]}>
+                      Save
+                    </Text>
+                  )}
+                </LinearGradient>
               </TouchableOpacity>
             </View>
           </View>
         ) : (
-          <View style={styles.heroInfo}>
+          <View style={styles.profileInfo}>
             <View style={styles.nameRow}>
-              <Text style={[styles.displayName, { color: C.text }]}>{displayName}</Text>
+              <Text style={[styles.displayName, { color: C.text, fontFamily: fonts.epilogue.bold }]}>
+                {displayName}
+              </Text>
               <TouchableOpacity
-                style={[styles.editIconBtn, { backgroundColor: C.surfaceAlt }]}
+                style={[styles.editIconBtn, { backgroundColor: C.surfaceContainerHigh }]}
                 onPress={() => setEditing(true)}
               >
-                <Ionicons name="pencil-outline" size={14} color={C.textSub} />
+                <Ionicons name="pencil" size={14} color={C.textSub} />
               </TouchableOpacity>
             </View>
 
-            <View style={[styles.roleBadge, { backgroundColor: roleColor + '22' }]}>
-              <Ionicons name="shield-checkmark-outline" size={12} color={roleColor} />
-              <Text style={[styles.roleBadgeText, { color: roleColor }]}>
-                {ROLE_LABEL[role]}
+            <View style={[styles.roleTag, { backgroundColor: `${roleConfig.color}20` }]}>
+              <Ionicons name={roleConfig.icon} size={14} color={roleConfig.color} />
+              <Text style={[styles.roleTagText, { color: roleConfig.color, fontFamily: fonts.manrope.semibold }]}>
+                {roleConfig.label}
               </Text>
             </View>
 
             {profile?.bio ? (
-              <Text style={[styles.bio, { color: C.textSub }]}>{profile.bio}</Text>
+              <Text style={[styles.bio, { color: C.textSub, fontFamily: fonts.manrope.regular }]}>
+                {profile.bio}
+              </Text>
             ) : (
               <TouchableOpacity onPress={() => setEditing(true)}>
-                <Text style={[styles.bioPlaceholder, { color: C.textMuted }]}>
+                <Text style={[styles.bioPlaceholder, { color: C.orange, fontFamily: fonts.manrope.medium }]}>
                   + Add a bio
                 </Text>
               </TouchableOpacity>
@@ -225,38 +253,38 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         )}
       </View>
 
-      {/* ── Membership stats ── */}
-      <View style={styles.statsRow}>
-        <View style={[styles.statBox, { backgroundColor: C.surface, borderColor: C.border }]}>
-          <Ionicons name="calendar-outline" size={18} color={C.orange} />
-          <Text style={[styles.statValue, { color: C.text }]}>
-            {createdAt ? formatDate(createdAt) : '—'}
+      {/* Stats Boxes */}
+      <View style={styles.statsGrid}>
+        <View style={[styles.statBox, { backgroundColor: C.surfaceContainer }]}>
+          <Ionicons name="book" size={24} color={C.orange} />
+          <Text style={[styles.statNumber, { color: C.text, fontFamily: fonts.epilogue.bold }]}>
+            {approvedCount}
           </Text>
-          <Text style={[styles.statLabel, { color: C.textMuted }]}>Member Since</Text>
+          <Text style={[styles.statLabel, { color: C.textMuted, fontFamily: fonts.manrope.medium }]}>
+            Stories Preserved
+          </Text>
         </View>
 
-        <View style={[styles.statBox, { backgroundColor: C.surface, borderColor: C.border }]}>
-          <Ionicons name="time-outline" size={18} color={C.orange} />
-          <Text style={[styles.statValue, { color: C.text }]}>
-            {createdAt ? memberDuration(createdAt) : '—'}
+        <View style={[styles.statBox, { backgroundColor: C.surfaceContainer }]}>
+          <Ionicons name="time" size={24} color={C.orange} />
+          <Text style={[styles.statNumber, { color: C.text, fontFamily: fonts.epilogue.bold }]}>
+            {totalHours}h
           </Text>
-          <Text style={[styles.statLabel, { color: C.textMuted }]}>Time as Archivist</Text>
-        </View>
-
-        <View style={[styles.statBox, { backgroundColor: C.surface, borderColor: C.border }]}>
-          <Ionicons name="library-outline" size={18} color={C.orange} />
-          <Text style={[styles.statValue, { color: C.text }]}>{approvedCount}</Text>
-          <Text style={[styles.statLabel, { color: C.textMuted }]}>Stories Live</Text>
+          <Text style={[styles.statLabel, { color: C.textMuted, fontFamily: fonts.manrope.medium }]}>
+            Hours Recorded
+          </Text>
         </View>
       </View>
 
-      {/* ── My Stories ── */}
-      <View style={[styles.section, { backgroundColor: C.surface, borderColor: C.border }]}>
+      {/* Recent Activities */}
+      <View style={[styles.section, { backgroundColor: C.surfaceContainer }]}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: C.text }]}>My Stories</Text>
+          <Text style={[styles.sectionTitle, { color: C.text, fontFamily: fonts.epilogue.semibold }]}>
+            Recent Activities
+          </Text>
           {pendingCount > 0 && (
-            <View style={[styles.pendingBadge, { backgroundColor: '#F5A62322' }]}>
-              <Text style={[styles.pendingBadgeText, { color: '#F5A623' }]}>
+            <View style={[styles.pendingBadge, { backgroundColor: '#F5A62320' }]}>
+              <Text style={[styles.pendingBadgeText, { color: '#F5A623', fontFamily: fonts.manrope.bold }]}>
                 {pendingCount} pending
               </Text>
             </View>
@@ -264,177 +292,532 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </View>
 
         {stories.length === 0 ? (
-          <View style={styles.emptyStories}>
-            <Ionicons name="mic-outline" size={32} color={C.textMuted} />
-            <Text style={[styles.emptyText, { color: C.textMuted }]}>
-              No stories uploaded yet.
+          <View style={styles.emptyState}>
+            <View style={[styles.emptyIcon, { backgroundColor: C.surfaceContainerHigh }]}>
+              <Ionicons name="mic-outline" size={32} color={C.textMuted} />
+            </View>
+            <Text style={[styles.emptyTitle, { color: C.text, fontFamily: fonts.manrope.semibold }]}>
+              No stories yet
+            </Text>
+            <Text style={[styles.emptySubtitle, { color: C.textMuted, fontFamily: fonts.manrope.regular }]}>
+              Start preserving your heritage
             </Text>
           </View>
         ) : (
-          stories.map(story => {
-            const status = (story.moderation_status ?? 'pending') as ModerationStatus;
-            const statusColor = STATUS_COLOR[status] ?? C.textMuted;
-            return (
-              <TouchableOpacity
-                key={story.id}
-                style={[styles.storyRow, { borderTopColor: C.border }]}
-                onPress={() => status === 'approved' ? onStorySelect(story.id) : undefined}
-                activeOpacity={status === 'approved' ? 0.7 : 1}
-              >
-                <View style={styles.storyRowLeft}>
-                  <View style={[styles.storyIcon, { backgroundColor: C.surfaceAlt }]}>
-                    <Ionicons
-                      name={status === 'approved' ? 'book-outline' : status === 'pending' ? 'time-outline' : 'close-circle-outline'}
-                      size={15}
-                      color={statusColor}
-                    />
+          <View style={styles.activityList}>
+            {stories.slice(0, 5).map((story) => {
+              const status = (story.moderation_status ?? 'pending') as ModerationStatus;
+              const statusConfig = STATUS_CONFIG[status];
+              return (
+                <TouchableOpacity
+                  key={story.id}
+                  style={styles.activityItem}
+                  onPress={() => status === 'approved' ? onStorySelect(story.id) : undefined}
+                  activeOpacity={status === 'approved' ? 0.7 : 1}
+                >
+                  <View style={[styles.activityIcon, { backgroundColor: `${statusConfig.color}20` }]}>
+                    <Ionicons name={statusConfig.icon} size={18} color={statusConfig.color} />
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.storyTitle, { color: C.text }]} numberOfLines={1}>
+                  <View style={styles.activityContent}>
+                    <Text style={[styles.activityTitle, { color: C.text, fontFamily: fonts.manrope.semibold }]} numberOfLines={1}>
                       {story.title}
                     </Text>
-                    <Text style={[styles.storyDate, { color: C.textMuted }]}>
+                    <Text style={[styles.activityMeta, { color: C.textMuted, fontFamily: fonts.manrope.regular }]}>
                       {story.created_at ? formatDate(story.created_at) : ''}
-                      {story.theme ? `  ·  ${story.theme}` : ''}
+                      {story.theme ? ` · ${story.theme}` : ''}
                     </Text>
                   </View>
-                </View>
-                <View style={[styles.statusPill, { backgroundColor: statusColor + '22' }]}>
-                  <Text style={[styles.statusPillText, { color: statusColor }]}>
-                    {status.toUpperCase()}
-                  </Text>
-                </View>
-                {status === 'rejected' && story.moderation_note && (
-                  <View style={[styles.rejectionNote, { backgroundColor: '#C0392B11', borderColor: '#C0392B33' }]}>
-                    <Ionicons name="information-circle-outline" size={13} color="#C0392B" />
-                    <Text style={[styles.rejectionNoteText, { color: '#C0392B' }]}>
-                      {story.moderation_note}
+                  <View style={[styles.statusPill, { backgroundColor: `${statusConfig.color}15` }]}>
+                    <Text style={[styles.statusPillText, { color: statusConfig.color, fontFamily: fonts.manrope.semibold }]}>
+                      {status}
                     </Text>
                   </View>
-                )}
-              </TouchableOpacity>
-            );
-          })
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         )}
       </View>
 
-      {/* ── Sign out ── */}
+      {/* Quick Access Card - The Vault */}
       <TouchableOpacity
-        style={[styles.signOutBtn, { borderColor: C.border }]}
+        style={[styles.vaultCard, { backgroundColor: C.surfaceContainer }]}
+        activeOpacity={0.8}
+      >
+        <View style={styles.vaultContent}>
+          <View style={[styles.vaultIcon, { backgroundColor: C.orangeGlow }]}>
+            <Ionicons name="library" size={28} color={C.orange} />
+          </View>
+          <View style={styles.vaultText}>
+            <Text style={[styles.vaultTitle, { color: C.text, fontFamily: fonts.manrope.semibold }]}>
+              The Vault
+            </Text>
+            <Text style={[styles.vaultSubtitle, { color: C.textMuted, fontFamily: fonts.manrope.regular }]}>
+              {approvedCount} stories preserved
+            </Text>
+          </View>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
+      </TouchableOpacity>
+
+      {/* Storage Indicator */}
+      <View style={[styles.storageCard, { backgroundColor: C.surfaceContainer }]}>
+        <View style={styles.storageHeader}>
+          <Text style={[styles.storageTitle, { color: C.text, fontFamily: fonts.manrope.semibold }]}>
+            Storage Used
+          </Text>
+          <Text style={[styles.storagePercent, { color: C.orange, fontFamily: fonts.manrope.bold }]}>
+            12%
+          </Text>
+        </View>
+        <View style={[styles.storageBar, { backgroundColor: C.surfaceContainerHigh }]}>
+          <LinearGradient
+            colors={gradients.primary}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.storageBarFill, { width: '12%' }]}
+          />
+        </View>
+        <Text style={[styles.storageText, { color: C.textMuted, fontFamily: fonts.manrope.regular }]}>
+          120 MB of 1 GB used
+        </Text>
+      </View>
+
+      {/* Member Since */}
+      {createdAt && (
+        <View style={[styles.memberCard, { backgroundColor: C.surfaceContainer }]}>
+          <Ionicons name="calendar-outline" size={20} color={C.textMuted} />
+          <Text style={[styles.memberText, { color: C.textMuted, fontFamily: fonts.manrope.regular }]}>
+            Member since {formatDate(createdAt)} ({memberDuration(createdAt)})
+          </Text>
+        </View>
+      )}
+
+      {/* Admin Tools - Only show for moderators and admins */}
+      {(role === 'moderator' || role === 'admin') && onNavigate && (
+        <View style={[styles.adminSection, { backgroundColor: C.surfaceContainer }]}>
+          <View style={styles.adminHeader}>
+            <Ionicons name="shield" size={20} color={C.orange} />
+            <Text style={[styles.adminTitle, { color: C.text, fontFamily: fonts.epilogue.semibold }]}>
+              Admin Tools
+            </Text>
+          </View>
+
+          {/* Moderation - visible to moderators and admins */}
+          <TouchableOpacity
+            style={styles.adminItem}
+            onPress={() => onNavigate('moderation')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.adminItemIcon, { backgroundColor: '#A855F720' }]}>
+              <Ionicons name="shield-checkmark" size={20} color="#A855F7" />
+            </View>
+            <View style={styles.adminItemContent}>
+              <Text style={[styles.adminItemTitle, { color: C.text, fontFamily: fonts.manrope.semibold }]}>
+                Moderation Queue
+              </Text>
+              <Text style={[styles.adminItemDesc, { color: C.textMuted, fontFamily: fonts.manrope.regular }]}>
+                Review and approve pending stories
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={C.textMuted} />
+          </TouchableOpacity>
+
+          {/* Admin Panel - only visible to admins */}
+          {role === 'admin' && (
+            <TouchableOpacity
+              style={styles.adminItem}
+              onPress={() => onNavigate('admin')}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.adminItemIcon, { backgroundColor: '#F5A62320' }]}>
+                <Ionicons name="settings" size={20} color="#F5A623" />
+              </View>
+              <View style={styles.adminItemContent}>
+                <Text style={[styles.adminItemTitle, { color: C.text, fontFamily: fonts.manrope.semibold }]}>
+                  Admin Panel
+                </Text>
+                <Text style={[styles.adminItemDesc, { color: C.textMuted, fontFamily: fonts.manrope.regular }]}>
+                  Manage users, settings, and system
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={C.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {/* Sign Out Button */}
+      <TouchableOpacity
+        style={[styles.signOutBtn, { backgroundColor: C.surfaceContainer }]}
         onPress={onSignOut}
       >
-        <Ionicons name="log-out-outline" size={17} color="#C0392B" />
-        <Text style={styles.signOutText}>Sign Out</Text>
+        <Ionicons name="log-out-outline" size={20} color="#C0392B" />
+        <Text style={[styles.signOutText, { fontFamily: fonts.manrope.semibold }]}>
+          Sign Out
+        </Text>
       </TouchableOpacity>
+
+      {/* Bottom spacing for nav bar */}
+      <View style={{ height: 120 }} />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content:   { padding: 18, paddingBottom: 48, gap: 14 },
-  center:    { flex: 1, justifyContent: 'center', alignItems: 'center' },
-
-  // Hero card
-  heroCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 20,
-    alignItems: 'center',
-    gap: 16,
+  container: {
+    flex: 1,
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 2,
+  content: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+  },
+  center: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarText: { fontSize: 28, fontWeight: '700' },
-  heroInfo:   { alignItems: 'center', gap: 8, width: '100%' },
-  nameRow:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  displayName:{ fontSize: 22, fontWeight: 'bold' },
-  editIconBtn: { padding: 6, borderRadius: 8 },
-  roleBadge:  {
+  // Profile Card
+  profileCard: {
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginBottom: spacing.lg,
+  },
+  avatarGradient: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    padding: 4,
+  },
+  avatar: {
+    flex: 1,
+    borderRadius: 46,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: 36,
+  },
+  roleBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#1A120C',
+  },
+  profileInfo: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    width: '100%',
+  },
+  nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
+    gap: spacing.sm,
   },
-  roleBadgeText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
-  bio:           { fontSize: 14, lineHeight: 21, textAlign: 'center' },
-  bioPlaceholder:{ fontSize: 13, textDecorationLine: 'underline' },
-
-  // Edit mode
-  editFields:  { width: '100%', gap: 10 },
-  nameInput:   { borderRadius: 10, borderWidth: 1, paddingHorizontal: 13, paddingVertical: 10, fontSize: 15 },
-  bioInput:    { borderRadius: 10, borderWidth: 1, paddingHorizontal: 13, paddingVertical: 10, fontSize: 14, minHeight: 80 },
-  editActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
-  editBtn:     { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: 'transparent' },
-  editBtnText: { fontSize: 13, fontWeight: '600' },
-
-  // Stats
-  statsRow: { flexDirection: 'row', gap: 10 },
-  statBox:  {
-    flex: 1,
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 14,
+  displayName: {
+    fontSize: 26,
+  },
+  editIconBtn: {
+    padding: spacing.sm,
+    borderRadius: borderRadius.sm,
+  },
+  roleTag: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
   },
-  statValue: { fontSize: 13, fontWeight: '700', textAlign: 'center' },
-  statLabel: { fontSize: 10, fontWeight: '600', textAlign: 'center', letterSpacing: 0.3 },
-
-  // Stories section
-  section: { borderRadius: 14, borderWidth: 1, overflow: 'hidden' },
+  roleTagText: {
+    fontSize: 13,
+  },
+  bio: {
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+    marginTop: spacing.sm,
+  },
+  bioPlaceholder: {
+    fontSize: 14,
+    marginTop: spacing.sm,
+  },
+  // Edit Form
+  editForm: {
+    width: '100%',
+    gap: spacing.md,
+  },
+  nameInput: {
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    fontSize: 16,
+  },
+  bioInput: {
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    fontSize: 15,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  editActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: spacing.sm,
+  },
+  editBtn: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+  },
+  editBtnText: {
+    fontSize: 14,
+  },
+  saveBtn: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+  },
+  saveBtnText: {
+    fontSize: 14,
+    color: '#FFF',
+  },
+  // Stats Grid
+  statsGrid: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  statBox: {
+    flex: 1,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  statNumber: {
+    fontSize: 28,
+    marginTop: spacing.xs,
+  },
+  statLabel: {
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  // Section
+  section: {
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+    marginBottom: spacing.lg,
+  },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    paddingBottom: 12,
+    padding: spacing.lg,
   },
-  sectionTitle:    { fontSize: 15, fontWeight: '700' },
-  pendingBadge:    { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  pendingBadgeText:{ fontSize: 11, fontWeight: '700' },
-  emptyStories:    { alignItems: 'center', gap: 8, padding: 28 },
-  emptyText:       { fontSize: 13 },
-  storyRow: {
-    borderTopWidth: 1,
-    padding: 14,
-    gap: 8,
+  sectionTitle: {
+    fontSize: 18,
   },
-  storyRowLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  storyIcon:    { width: 34, height: 34, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
-  storyTitle:   { fontSize: 14, fontWeight: '600' },
-  storyDate:    { fontSize: 11, marginTop: 2 },
-  statusPill:   { alignSelf: 'flex-start', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10 },
-  statusPillText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
-  rejectionNote: {
+  pendingBadge: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+  },
+  pendingBadgeText: {
+    fontSize: 11,
+  },
+  // Empty State
+  emptyState: {
+    alignItems: 'center',
+    padding: spacing.xxl,
+    gap: spacing.sm,
+  },
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: borderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  emptyTitle: {
+    fontSize: 16,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+  },
+  // Activity List
+  activityList: {
+    paddingBottom: spacing.md,
+  },
+  activityItem: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 6,
-    padding: 9,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginTop: 4,
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    gap: spacing.md,
   },
-  rejectionNoteText: { flex: 1, fontSize: 12, lineHeight: 18 },
-
-  // Sign out
+  activityIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activityContent: {
+    flex: 1,
+  },
+  activityTitle: {
+    fontSize: 15,
+    marginBottom: 2,
+  },
+  activityMeta: {
+    fontSize: 12,
+  },
+  statusPill: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+  },
+  statusPillText: {
+    fontSize: 11,
+    textTransform: 'capitalize',
+  },
+  // Vault Card
+  vaultCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  vaultContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  vaultIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: borderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  vaultText: {},
+  vaultTitle: {
+    fontSize: 16,
+    marginBottom: 2,
+  },
+  vaultSubtitle: {
+    fontSize: 13,
+  },
+  // Storage Card
+  storageCard: {
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  storageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  storageTitle: {
+    fontSize: 15,
+  },
+  storagePercent: {
+    fontSize: 15,
+  },
+  storageBar: {
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: spacing.sm,
+  },
+  storageBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  storageText: {
+    fontSize: 12,
+  },
+  // Member Card
+  memberCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  memberText: {
+    fontSize: 13,
+  },
+  // Admin Section
+  adminSection: {
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+    marginBottom: spacing.lg,
+  },
+  adminHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.lg,
+    paddingBottom: spacing.md,
+  },
+  adminTitle: {
+    fontSize: 18,
+  },
+  adminItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    gap: spacing.md,
+  },
+  adminItemIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  adminItemContent: {
+    flex: 1,
+  },
+  adminItemTitle: {
+    fontSize: 15,
+    marginBottom: 2,
+  },
+  adminItemDesc: {
+    fontSize: 12,
+  },
+  // Sign Out
   signOutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingVertical: 14,
-    marginTop: 4,
+    gap: spacing.sm,
+    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.lg,
   },
-  signOutText: { color: '#C0392B', fontSize: 15, fontWeight: '700' },
+  signOutText: {
+    color: '#C0392B',
+    fontSize: 15,
+  },
 });

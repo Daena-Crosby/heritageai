@@ -5,229 +5,286 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
   useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
+import { fonts } from '../theme/fonts';
+import { spacing, borderRadius } from '../theme/colors';
 import { Story } from '../services/api';
 
 interface StorybookModeProps {
   story: Story;
+  showTranslation?: boolean;
 }
 
-export const StorybookMode: React.FC<StorybookModeProps> = ({ story }) => {
+export const StorybookMode: React.FC<StorybookModeProps> = ({ story, showTranslation: externalShowTranslation }) => {
   const { colors: C } = useTheme();
   const { width } = useWindowDimensions();
-  const [showTranslation, setShowTranslation] = useState(true);
+  const [internalShowTranslation, setInternalShowTranslation] = useState(true);
   const [imgError, setImgError] = useState(false);
+
+  const showTranslation = externalShowTranslation ?? internalShowTranslation;
 
   const translation = story.translations?.[0];
   const illustrations = story.illustrations || [];
-  const heroImage = !imgError ? illustrations[0]?.image_url : undefined;
 
-  const originalText = translation?.original_text?.trim();
-  const englishText = translation?.translated_text?.trim();
+  const originalText = translation?.original_text?.trim() || story.original_text?.trim();
+  const englishText = translation?.translated_text?.trim() || story.translated_text?.trim();
 
   const hasOriginal = !!originalText;
   const hasEnglish = !!englishText;
   const hasBoth = hasOriginal && hasEnglish;
 
-  // Text shown in the full-story section
   const displayText = showTranslation && hasEnglish ? englishText : (originalText ?? englishText ?? '');
 
-  // Synopsis — first 220 chars of the English text (fall back to original)
   const synopsisSource = englishText ?? originalText ?? '';
   const synopsis = synopsisSource.length > 220
     ? synopsisSource.slice(0, 220).trimEnd() + '…'
     : synopsisSource;
 
-  const meta = [
-    story.theme && { icon: 'pricetag-outline' as const, label: story.theme.toUpperCase() },
-    story.country && { icon: 'earth-outline' as const, label: story.country },
-    story.language && { icon: 'language-outline' as const, label: story.language },
-  ].filter(Boolean) as { icon: keyof typeof Ionicons.glyphMap; label: string }[];
-
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: C.bg }]}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* ── Hero illustration ── */}
-      {heroImage ? (
-        <Image
-          source={{ uri: heroImage }}
-          style={[styles.hero, { width: width - 32 }]}
-          resizeMode="cover"
-          onError={() => setImgError(true)}
-        />
-      ) : (
-        <View
-          style={[
-            styles.heroPlaceholder,
-            { width: width - 32, backgroundColor: C.surface, borderColor: C.border },
-          ]}
-        >
-          <Ionicons name="image-outline" size={38} color={C.textMuted} />
-          <Text style={[styles.heroPlaceholderTitle, { color: C.textMuted }]}>
-            {illustrations.length === 0 ? 'Illustration generating…' : 'Image unavailable'}
-          </Text>
-          {illustrations.length === 0 && (
-            <Text style={[styles.heroPlaceholderHint, { color: C.textMuted }]}>
-              AI illustration will appear once processing completes
-            </Text>
-          )}
-        </View>
-      )}
-
-      {/* ── Metadata chips ── */}
-      {meta.length > 0 && (
-        <View style={styles.metaRow}>
-          {meta.map(({ icon, label }) => (
-            <View key={label} style={[styles.chip, { backgroundColor: C.surface, borderColor: C.border }]}>
-              <Ionicons name={icon} size={12} color={C.orange} />
-              <Text style={[styles.chipText, { color: C.textSub }]}>{label}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* ── Synopsis ── */}
+    <View style={styles.container}>
+      {/* Synopsis Card */}
       {synopsis.length > 0 && (
-        <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.border }]}>
-          <Text style={[styles.cardLabel, { color: C.orange }]}>SYNOPSIS</Text>
-          <Text style={[styles.synopsisText, { color: C.textSub }]}>{synopsis}</Text>
+        <View style={[styles.card, { backgroundColor: C.surfaceContainer }]}>
+          <Text style={[styles.cardLabel, { color: C.orange, fontFamily: fonts.manrope.bold }]}>
+            SYNOPSIS
+          </Text>
+          <Text style={[styles.synopsisText, { color: C.textSub, fontFamily: fonts.manrope.regular }]}>
+            {synopsis}
+          </Text>
         </View>
       )}
 
-      {/* ── Full story text with translate toggle ── */}
-      {(hasOriginal || hasEnglish) ? (
-        <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.border }]}>
-          <View style={styles.storyHeader}>
-            <Text style={[styles.cardLabel, { color: C.orange }]}>FULL STORY</Text>
+      {/* Illustrations Gallery */}
+      {illustrations.length > 0 && (
+        <View style={styles.illustrationsSection}>
+          <Text style={[styles.sectionLabel, { color: C.textMuted, fontFamily: fonts.manrope.bold }]}>
+            AI ILLUSTRATIONS
+          </Text>
+          <View style={styles.illustrationsGrid}>
+            {illustrations.slice(0, 4).map((ill, index) => (
+              <View
+                key={ill.id || index}
+                style={[styles.illustrationCard, { backgroundColor: C.surfaceContainerHigh }]}
+              >
+                {ill.image_url && !imgError ? (
+                  <Image
+                    source={{ uri: ill.image_url }}
+                    style={styles.illustrationImage}
+                    resizeMode="cover"
+                    onError={() => setImgError(true)}
+                  />
+                ) : (
+                  <View style={styles.illustrationPlaceholder}>
+                    <Ionicons name="image-outline" size={24} color={C.textMuted} />
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
 
-            {/* Toggle — only shown when both original and English exist */}
-            {hasBoth && (
-              <View style={[styles.toggle, { backgroundColor: C.surfaceAlt, borderColor: C.border }]}>
+      {/* No illustrations yet */}
+      {illustrations.length === 0 && (
+        <View style={[styles.illustrationsSection, styles.noIllustrations, { backgroundColor: C.surfaceContainer }]}>
+          <Ionicons name="sparkles" size={32} color={C.textMuted} />
+          <Text style={[styles.noIllustrationsTitle, { color: C.text, fontFamily: fonts.manrope.semibold }]}>
+            Illustrations Generating
+          </Text>
+          <Text style={[styles.noIllustrationsText, { color: C.textMuted, fontFamily: fonts.manrope.regular }]}>
+            AI is creating unique artwork for this story
+          </Text>
+        </View>
+      )}
+
+      {/* Full Story Text */}
+      {(hasOriginal || hasEnglish) ? (
+        <View style={[styles.card, { backgroundColor: C.surfaceContainer }]}>
+          <View style={styles.storyHeader}>
+            <Text style={[styles.cardLabel, { color: C.orange, fontFamily: fonts.manrope.bold }]}>
+              FULL STORY
+            </Text>
+
+            {hasBoth && externalShowTranslation === undefined && (
+              <View style={[styles.toggle, { backgroundColor: C.surfaceContainerHigh }]}>
                 <TouchableOpacity
-                  style={[styles.toggleOption, !showTranslation && { backgroundColor: C.orange }]}
-                  onPress={() => setShowTranslation(false)}
+                  style={[styles.toggleOption, !internalShowTranslation && { backgroundColor: C.orange }]}
+                  onPress={() => setInternalShowTranslation(false)}
                 >
-                  <Text style={[styles.toggleText, { color: !showTranslation ? '#FFF' : C.textSub }]}>
+                  <Text
+                    style={[
+                      styles.toggleText,
+                      {
+                        color: !internalShowTranslation ? '#FFF' : C.textSub,
+                        fontFamily: fonts.manrope.semibold,
+                      },
+                    ]}
+                  >
                     Original
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.toggleOption, showTranslation && { backgroundColor: C.orange }]}
-                  onPress={() => setShowTranslation(true)}
+                  style={[styles.toggleOption, internalShowTranslation && { backgroundColor: C.orange }]}
+                  onPress={() => setInternalShowTranslation(true)}
                 >
-                  <Text style={[styles.toggleText, { color: showTranslation ? '#FFF' : C.textSub }]}>
+                  <Text
+                    style={[
+                      styles.toggleText,
+                      {
+                        color: internalShowTranslation ? '#FFF' : C.textSub,
+                        fontFamily: fonts.manrope.semibold,
+                      },
+                    ]}
+                  >
                     English
                   </Text>
                 </TouchableOpacity>
               </View>
             )}
 
-            {/* Label when only English exists (no original stored) */}
             {!hasBoth && hasEnglish && (
-              <View style={[styles.langBadge, { backgroundColor: C.activeNav }]}>
-                <Ionicons name="language-outline" size={11} color={C.orange} />
-                <Text style={[styles.langBadgeText, { color: C.orange }]}>English</Text>
+              <View style={[styles.langBadge, { backgroundColor: C.orangeGlow }]}>
+                <Ionicons name="language" size={14} color={C.orange} />
+                <Text style={[styles.langBadgeText, { color: C.orange, fontFamily: fonts.manrope.semibold }]}>
+                  English
+                </Text>
               </View>
             )}
           </View>
 
-          <Text style={[styles.storyText, { color: C.text }]}>{displayText}</Text>
+          <Text style={[styles.storyText, { color: C.text, fontFamily: fonts.manrope.regular }]}>
+            {displayText}
+          </Text>
         </View>
       ) : (
-        /* Nothing processed yet */
-        <View style={[styles.card, styles.processingCard, { backgroundColor: C.surface, borderColor: C.border }]}>
+        <View style={[styles.card, styles.processingCard, { backgroundColor: C.surfaceContainer }]}>
           <ActivityIndicator color={C.orange} />
-          <Text style={[styles.processingTitle, { color: C.textSub }]}>Processing story…</Text>
-          <Text style={[styles.processingHint, { color: C.textMuted }]}>
-            Transcription and translation are still running. Check back in a moment.
+          <Text style={[styles.processingTitle, { color: C.text, fontFamily: fonts.manrope.semibold }]}>
+            Processing Story
+          </Text>
+          <Text style={[styles.processingHint, { color: C.textMuted, fontFamily: fonts.manrope.regular }]}>
+            Transcription and translation are in progress. This may take a moment.
           </Text>
         </View>
       )}
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { padding: 16, paddingBottom: 40, gap: 14 },
-  hero: {
-    height: 220,
-    borderRadius: 14,
-    alignSelf: 'center',
+  container: {
+    gap: spacing.lg,
   },
-  heroPlaceholder: {
-    height: 220,
-    borderRadius: 14,
-    alignSelf: 'center',
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 24,
-  },
-  heroPlaceholderTitle: { fontSize: 14, fontWeight: '600', textAlign: 'center' },
-  heroPlaceholderHint: { fontSize: 12, textAlign: 'center', lineHeight: 18 },
-  metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  chipText: { fontSize: 11, fontWeight: '600', letterSpacing: 0.4 },
   card: {
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 16,
-    gap: 10,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    gap: spacing.md,
   },
   cardLabel: {
     fontSize: 10,
-    fontWeight: '700',
     letterSpacing: 1.5,
   },
-  synopsisText: { fontSize: 14, lineHeight: 22 },
+  synopsisText: {
+    fontSize: 15,
+    lineHeight: 24,
+  },
+  // Illustrations
+  illustrationsSection: {
+    gap: spacing.md,
+  },
+  sectionLabel: {
+    fontSize: 10,
+    letterSpacing: 1.5,
+    marginLeft: spacing.xs,
+  },
+  illustrationsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  illustrationCard: {
+    width: 80,
+    height: 80,
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
+  },
+  illustrationImage: {
+    width: '100%',
+    height: '100%',
+  },
+  illustrationPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noIllustrations: {
+    alignItems: 'center',
+    padding: spacing.xl,
+    borderRadius: borderRadius.xl,
+  },
+  noIllustrationsTitle: {
+    fontSize: 16,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  noIllustrationsText: {
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  // Story Header
   storyHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.md,
   },
   toggle: {
     flexDirection: 'row',
-    borderRadius: 8,
-    borderWidth: 1,
-    overflow: 'hidden',
+    borderRadius: borderRadius.md,
+    padding: spacing.xs,
   },
   toggleOption: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.sm,
   },
-  toggleText: { fontSize: 12, fontWeight: '600' },
+  toggleText: {
+    fontSize: 12,
+  },
   langBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 6,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
   },
-  langBadgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
-  storyText: { fontSize: 15, lineHeight: 26 },
-  processingCard: { alignItems: 'center', paddingVertical: 32, gap: 10 },
-  processingTitle: { fontSize: 15, fontWeight: '600' },
-  processingHint: { fontSize: 13, textAlign: 'center', lineHeight: 20 },
+  langBadgeText: {
+    fontSize: 12,
+  },
+  storyText: {
+    fontSize: 16,
+    lineHeight: 28,
+  },
+  // Processing state
+  processingCard: {
+    alignItems: 'center',
+    paddingVertical: spacing.xxl,
+    gap: spacing.md,
+  },
+  processingTitle: {
+    fontSize: 16,
+    marginTop: spacing.sm,
+  },
+  processingHint: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 22,
+    maxWidth: 280,
+  },
 });

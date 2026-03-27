@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
+import { fonts } from '../theme/fonts';
 
 export type AppScreen = 'home' | 'dialects' | 'vault' | 'guide' | 'record' | 'moderation' | 'admin' | 'profile';
 
@@ -58,18 +59,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onNavigate, user
       style={[
         styles.sidebar,
         !isWide && styles.sidebarNarrow,
-        { backgroundColor: C.sidebar, borderRightColor: C.border },
+        { backgroundColor: C.sidebar },
       ]}
     >
       {/* Logo */}
       <View style={[styles.logoRow, !isWide && styles.logoRowCenter]}>
-        <View style={[styles.logoIcon, { backgroundColor: isDark ? '#1E1508' : '#FFF3DC' }]}>
-          <Ionicons name="flame" size={18} color={C.orange} />
+        <View style={[styles.logoIcon, { backgroundColor: C.surfaceAlt }]}>
+          <Ionicons name="flame" size={20} color={C.orange} />
         </View>
         {isWide && (
           <View>
-            <Text style={[styles.logoText, { color: C.text }]}>Heritage AI</Text>
-            <Text style={[styles.logoSub, { color: C.orange }]}>DIGITAL ARCHIVE</Text>
+            <Text style={[styles.logoText, { color: C.text, fontFamily: fonts.epilogue.bold }]}>
+              Heritage AI
+            </Text>
+            <Text style={[styles.logoSub, { color: C.orange, fontFamily: fonts.manrope.bold }]}>
+              DIGITAL ARCHIVE
+            </Text>
           </View>
         )}
       </View>
@@ -97,8 +102,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onNavigate, user
                 <Text
                   style={[
                     styles.navLabel,
-                    { color: isActive ? C.text : C.textSub },
-                    isActive && styles.navLabelActive,
+                    {
+                      color: isActive ? C.text : C.textSub,
+                      fontFamily: isActive ? fonts.manrope.semibold : fonts.manrope.regular,
+                    },
                   ]}
                 >
                   {item.label}
@@ -112,14 +119,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onNavigate, user
       {/* Contribute */}
       <View style={styles.contribute}>
         {isWide && (
-          <Text style={[styles.sectionLabel, { color: C.textMuted }]}>CONTRIBUTE</Text>
+          <Text style={[styles.sectionLabel, { color: C.textMuted, fontFamily: fonts.manrope.bold }]}>
+            CONTRIBUTE
+          </Text>
         )}
         <TouchableOpacity
           style={[styles.recordBtn, { backgroundColor: C.orange }, !isWide && styles.recordBtnNarrow]}
           onPress={() => onNavigate('record')}
         >
           <Ionicons name="add-circle" size={17} color="#FFF" />
-          {isWide && <Text style={styles.recordBtnText}>Record Story</Text>}
+          {isWide && (
+            <Text style={[styles.recordBtnText, { fontFamily: fonts.manrope.bold }]}>
+              Record Story
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -131,11 +144,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onNavigate, user
           <View
             style={[
               styles.modeTogglePill,
-              { backgroundColor: C.surfaceAlt, borderColor: C.border },
+              { backgroundColor: C.surfaceAlt },
             ]}
           >
-            <Text style={[styles.modeToggleLabel, { color: C.textSub }]}>
-              {isDark ? 'Dark Mode Active' : 'Light Mode Active'}
+            <Text style={[styles.modeToggleLabel, { color: C.textSub, fontFamily: fonts.manrope.regular }]}>
+              {isDark ? 'Dark Mode' : 'Light Mode'}
             </Text>
             <Ionicons name={isDark ? 'moon' : 'sunny'} size={13} color={C.textSub} />
           </View>
@@ -151,7 +164,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onNavigate, user
         style={[
           styles.profile,
           !isWide && styles.profileCenter,
-          { borderTopColor: C.border },
+          { backgroundColor: C.surfaceAlt },
         ]}
         onPress={user ? () => onNavigate('profile') : onSignIn}
         activeOpacity={0.7}
@@ -160,8 +173,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onNavigate, user
           style={[
             styles.profileAvatar,
             {
-              backgroundColor: user ? C.orange : C.surfaceAlt,
-              borderColor: user ? C.orange : C.border,
+              backgroundColor: user ? C.orange : C.surfaceContainerLow,
             },
           ]}
         >
@@ -169,10 +181,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onNavigate, user
         </View>
         {isWide && (
           <View style={{ flex: 1 }}>
-            <Text style={[styles.profileName, { color: C.text }]} numberOfLines={1}>
+            <Text style={[styles.profileName, { color: C.text, fontFamily: fonts.manrope.semibold }]} numberOfLines={1}>
               {displayName}
             </Text>
-            <Text style={[styles.profileRole, { color: user ? C.orange : C.textMuted }]}>
+            <Text style={[styles.profileRole, { color: user ? C.orange : C.textMuted, fontFamily: fonts.manrope.bold }]}>
               {user
                 ? user.role
                   ? user.role.toUpperCase()
@@ -188,22 +200,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onNavigate, user
 
 const styles = StyleSheet.create({
   sidebar: {
-    width: 175,
+    width: 180,
     paddingTop: 24,
     paddingBottom: 20,
-    paddingHorizontal: 12,
-    borderRightWidth: 1,
+    paddingHorizontal: 14,
   },
   sidebarNarrow: {
-    width: 62,
-    paddingHorizontal: 8,
+    width: 68,
+    paddingHorizontal: 10,
     alignItems: 'center',
   },
   logoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 28,
+    gap: 12,
+    marginBottom: 32,
     paddingLeft: 4,
   },
   logoRowCenter: {
@@ -211,31 +222,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logoIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoText: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 16,
   },
   logoSub: {
-    fontSize: 8,
-    fontWeight: '700',
-    letterSpacing: 1.2,
+    fontSize: 9,
+    letterSpacing: 1.3,
   },
   nav: {
-    gap: 2,
+    gap: 4,
   },
   navItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    gap: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
+    borderRadius: 10,
   },
   navItemCenter: {
     justifyContent: 'center',
@@ -245,88 +254,83 @@ const styles = StyleSheet.create({
   navLabel: {
     fontSize: 14,
   },
-  navLabelActive: {
-    fontWeight: '600',
-  },
+  navLabelActive: {},
   contribute: {
-    marginTop: 24,
-    gap: 8,
+    marginTop: 28,
+    gap: 10,
   },
   sectionLabel: {
     fontSize: 10,
-    fontWeight: '700',
     letterSpacing: 1.5,
-    paddingLeft: 10,
-    marginBottom: 2,
+    paddingLeft: 12,
+    marginBottom: 4,
   },
   recordBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    borderRadius: 10,
-    paddingVertical: 11,
-    paddingHorizontal: 12,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
   },
   recordBtnNarrow: {
     paddingHorizontal: 0,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
   recordBtnText: {
     color: '#FFF',
-    fontWeight: '700',
     fontSize: 13,
   },
   modeToggle: {
-    marginBottom: 10,
+    marginBottom: 12,
   },
   modeTogglePill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: 6,
-    paddingHorizontal: 9,
-    paddingVertical: 7,
-    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   modeToggleLabel: {
-    fontSize: 10,
+    fontSize: 11,
     flex: 1,
   },
   modeToggleNarrow: {
-    marginBottom: 10,
-    padding: 8,
+    marginBottom: 12,
+    padding: 10,
     alignItems: 'center',
   },
   profile: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingTop: 12,
-    borderTopWidth: 1,
+    gap: 10,
+    paddingTop: 14,
+    paddingBottom: 4,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    marginTop: 4,
   },
   profileCenter: {
     justifyContent: 'center',
   },
   profileAvatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
   },
   profileName: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
     textTransform: 'capitalize',
   },
   profileRole: {
     fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
     marginTop: 1,
   },
 });

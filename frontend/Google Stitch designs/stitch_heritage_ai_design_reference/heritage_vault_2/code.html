@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Heritage AI - Digital Vault</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;700;800;900&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#2a170f",
+              "on-secondary": "#372f22",
+              "outline-variant": "#594139",
+              "on-secondary-fixed": "#221a0f",
+              "on-tertiary-fixed-variant": "#5a4137",
+              "secondary-fixed": "#efe0cd",
+              "on-secondary-container": "#c4b6a5",
+              "on-primary-fixed-variant": "#802900",
+              "on-error": "#690005",
+              "on-tertiary-container": "#432c23",
+              "primary-fixed-dim": "#ffb59a",
+              "background": "#18120d",
+              "on-primary-container": "#5c1c00",
+              "surface-container-lowest": "#120d08",
+              "surface-bright": "#3f3831",
+              "surface-container-low": "#201b15",
+              "on-surface": "#ede0d7",
+              "secondary": "#d2c4b2",
+              "surface-tint": "#ffb59a",
+              "on-surface-variant": "#e2bfb3",
+              "tertiary-fixed-dim": "#e3bfb2",
+              "on-error-container": "#ffdad6",
+              "inverse-surface": "#ede0d7",
+              "surface-dim": "#18120d",
+              "on-secondary-fixed-variant": "#4f4538",
+              "surface": "#18120d",
+              "surface-variant": "#3a342d",
+              "error-container": "#93000a",
+              "on-background": "#ede0d7",
+              "surface-container-high": "#2f2923",
+              "inverse-primary": "#a83900",
+              "surface-container": "#251f19",
+              "primary-fixed": "#ffdbcf",
+              "secondary-fixed-dim": "#d2c4b2",
+              "tertiary-fixed": "#ffdbce",
+              "tertiary": "#e3bfb2",
+              "primary-container": "#ff6b2c",
+              "tertiary-container": "#b39286",
+              "outline": "#a98a7f",
+              "on-tertiary": "#422b22",
+              "on-primary": "#5b1b00",
+              "primary": "#ffb59a",
+              "surface-container-highest": "#3a342d",
+              "error": "#ffb4ab",
+              "inverse-on-surface": "#362f29",
+              "secondary-container": "#51483a",
+              "on-primary-fixed": "#380d00"
+            },
+            fontFamily: {
+              "headline": ["Epilogue"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        body {
+            background-color: #18120d;
+            color: #ede0d7;
+            font-family: 'Manrope', sans-serif;
+        }
+        .signature-gradient {
+            background: linear-gradient(135deg, #ffb59a 0%, #ff6b2c 100%);
+        }
+        .glass-nav {
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-dim">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-stone-50/80 dark:bg-stone-950/80 backdrop-blur-xl">
+<div class="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-colors p-2 rounded-full active:scale-95 duration-200 ease-in-out">
+<span class="material-symbols-outlined text-orange-600 dark:text-orange-400">menu</span>
+</button>
+<h1 class="text-2xl font-black text-orange-600 dark:text-orange-500 italic font-['Epilogue'] tracking-tight">Heritage AI</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-colors p-2 rounded-full active:scale-95 duration-200 ease-in-out">
+<span class="material-symbols-outlined text-orange-600 dark:text-orange-400">search</span>
+</button>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-7xl mx-auto">
+<!-- Stats Hero Section -->
+<section class="mb-12">
+<div class="relative overflow-hidden rounded-[2rem] bg-surface-container-low p-8 md:p-12">
+<div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+<div>
+<h2 class="font-headline text-4xl md:text-5xl font-extrabold tracking-tight mb-2 text-on-surface">Digital Vault</h2>
+<p class="font-body text-on-surface-variant max-w-md">Your personal archive of ancestry, folklore, and the threads that weave your legacy together.</p>
+</div>
+<div class="flex gap-4 w-full md:w-auto">
+<div class="flex-1 md:flex-none bg-surface-container-high rounded-2xl p-6 border border-white/5">
+<p class="font-label text-xs uppercase tracking-widest text-primary mb-1">Stories Preserved</p>
+<p class="font-headline text-3xl font-bold">12</p>
+</div>
+<div class="flex-1 md:flex-none bg-surface-container-high rounded-2xl p-6 border border-white/5">
+<p class="font-label text-xs uppercase tracking-widest text-primary mb-1">Hours Recorded</p>
+<p class="font-headline text-3xl font-bold">4</p>
+</div>
+</div>
+</div>
+<!-- Abstract Background Ornament -->
+<div class="absolute -right-20 -top-20 w-96 h-96 signature-gradient opacity-10 rounded-full blur-3xl"></div>
+</div>
+</section>
+<!-- Categories: Tonal Layering -->
+<section class="mb-16">
+<div class="flex items-center justify-between mb-8">
+<h3 class="font-headline text-2xl font-bold text-on-surface">Categories</h3>
+<button class="text-primary font-label text-sm font-semibold hover:underline">View All</button>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<!-- Category: Family -->
+<div class="group cursor-pointer bg-surface-container rounded-xl p-6 flex flex-col items-center justify-center gap-3 transition-all hover:bg-surface-container-high">
+<div class="w-16 h-16 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary text-3xl">family_history</span>
+</div>
+<span class="font-body font-bold text-on-surface">Family</span>
+</div>
+<!-- Category: Folklore -->
+<div class="group cursor-pointer bg-surface-container rounded-xl p-6 flex flex-col items-center justify-center gap-3 transition-all hover:bg-surface-container-high">
+<div class="w-16 h-16 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary text-3xl">auto_stories</span>
+</div>
+<span class="font-body font-bold text-on-surface">Folklore</span>
+</div>
+<!-- Category: Recipes -->
+<div class="group cursor-pointer bg-surface-container rounded-xl p-6 flex flex-col items-center justify-center gap-3 transition-all hover:bg-surface-container-high">
+<div class="w-16 h-16 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary text-3xl">restaurant</span>
+</div>
+<span class="font-body font-bold text-on-surface">Recipes</span>
+</div>
+<!-- Category: History -->
+<div class="group cursor-pointer bg-surface-container rounded-xl p-6 flex flex-col items-center justify-center gap-3 transition-all hover:bg-surface-container-high">
+<div class="w-16 h-16 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary text-3xl">history_edu</span>
+</div>
+<span class="font-body font-bold text-on-surface">History</span>
+</div>
+</div>
+</section>
+<!-- Artifacts Grid: Bento Style -->
+<section>
+<div class="flex items-center justify-between mb-8">
+<h3 class="font-headline text-2xl font-bold text-on-surface">Recent Treasures</h3>
+<div class="flex bg-surface-container rounded-full p-1">
+<button class="bg-surface-container-highest text-on-surface p-2 rounded-full">
+<span class="material-symbols-outlined">grid_view</span>
+</button>
+<button class="text-on-surface-variant p-2 rounded-full opacity-50">
+<span class="material-symbols-outlined">list</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Featured Artifact Card -->
+<div class="md:col-span-8 bg-surface-container-low rounded-3xl overflow-hidden group border border-white/5">
+<div class="relative h-64 md:h-80">
+<img alt="Grandpa's Journal" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="dramatic close-up of a vintage leather-bound diary with handwritten pages and old sepia photographs scattered around on a rustic wooden table" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2XwqUafTGJFlvu26TJwwUF9xPPNJHVOGCBTqkZRsi0Rrxj-t-k0C6s3w8Q87ViX_26xheoyoVuSVoq8jzeL3qp6ZdjKpIcnyCcCnZ69Rulj_6dU8x12E7TYSUuMHSSlijjy-Xr42NVqIm3q-KolQhgW5m70u6HxEGggPAbOORCj7XQLyFzLJHb8Fs54pfugAPvjvTuDwZHiyuGIKo3HVdno8kdZYsdl1L1iLt-6qxhQ19E8K0dOPzxvmvVd1e-EG_shuW0pzXnGQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low via-transparent to-transparent"></div>
+<div class="absolute top-4 left-4 bg-primary text-on-primary px-3 py-1 rounded-full font-label text-xs font-bold uppercase tracking-widest">Featured Story</div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h4 class="font-headline text-2xl font-bold mb-2">Grandpa Elias’s Migration Diary</h4>
+<div class="flex items-center gap-4 text-sm text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">calendar_today</span> 1942</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">mic</span> 12m 45s</span>
+</div>
+</div>
+<button class="w-12 h-12 signature-gradient rounded-full flex items-center justify-center text-on-primary-container shadow-lg">
+<span class="material-symbols-outlined filled-icon">play_arrow</span>
+</button>
+</div>
+<p class="font-body text-on-surface-variant leading-relaxed">A detailed account of the journey across the Atlantic, including original sketches and voice notes transcribed from the oral history session.</p>
+</div>
+</div>
+<!-- Small Artifact Card 1 -->
+<div class="md:col-span-4 bg-surface-container rounded-3xl overflow-hidden flex flex-col border border-white/5">
+<div class="h-48 relative">
+<img alt="Secret Family Recipe" class="w-full h-full object-cover" data-alt="vibrant flat lay of traditional family recipes written on stained index cards surrounded by fresh herbs and spices" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwabhwXgMVYYvRzhR8g3ROnEjObkVpCLwF3RAGXGdCHNx2Ht1yG3LVKAdVJT60C61JaMyrj9bp6S-4TLChJxbjd7Tb5v2k2J3uGEgJHpQ8Yl0nTMPWDrb3SmChK_DayWBIN9MZeEUWc1X44vVMmG6a-zRQc5nHVoc2RVUKUWjflxXyxEw0pSYzG2hL1XLkuDE0laNzVnE7QtpPm92g-FrmWSjxPTQNdVdWtMLZFbdGUcX0xTSbXXQMSCc8fyieTHb4-IUB_2CDk3o"/>
+<div class="absolute inset-0 bg-black/20"></div>
+</div>
+<div class="p-6">
+<h4 class="font-headline text-lg font-bold mb-2">Nonno’s Polenta Secret</h4>
+<p class="font-body text-sm text-on-surface-variant mb-4 line-clamp-2">The original 19th-century recipe passed down through five generations...</p>
+<div class="flex items-center justify-between">
+<span class="font-label text-xs text-primary font-bold uppercase tracking-wider">Recipes</span>
+<span class="material-symbols-outlined text-on-surface-variant">arrow_forward</span>
+</div>
+</div>
+</div>
+<!-- Small Artifact Card 2 -->
+<div class="md:col-span-4 bg-surface-container rounded-3xl overflow-hidden flex flex-col border border-white/5">
+<div class="h-48 relative">
+<img alt="Industrial History" class="w-full h-full object-cover" data-alt="close up of old metal gears and vintage machinery parts with a soft warm lighting on a dark workshop background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXsbnS2NBB2iEDLOBQFoBWA2yHTqmCHxmeBWLRQ1Hdn8_bAk6z9T0e9xKmL0uS-aTyxsLth1tTXGJD0JpGopWDyy7-FRQwUyQCPEUw3k1IIB4UdG5lD7DnXdCFeS40Pr-uqBqHkLLQ7KhYWkCX2mhc6i-1ltHf3ISmRSyqyNlJFkV9xw6jdyX87uLGmaVtt0Jdtzx7mfeeEEHvAGYSZOQnJj4Oct7xaJGUcAw2TM1PNms2o5IKYy-Gwf886ofxbq_cOINTmxFq1uw"/>
+<div class="absolute inset-0 bg-black/20"></div>
+</div>
+<div class="p-6">
+<h4 class="font-headline text-lg font-bold mb-2">The Foundry Letters</h4>
+<p class="font-body text-sm text-on-surface-variant mb-4 line-clamp-2">Saved correspondence from the family-run ironworks during the industrial boom...</p>
+<div class="flex items-center justify-between">
+<span class="font-label text-xs text-primary font-bold uppercase tracking-wider">History</span>
+<span class="material-symbols-outlined text-on-surface-variant">arrow_forward</span>
+</div>
+</div>
+</div>
+<!-- Small Artifact Card 3 -->
+<div class="md:col-span-4 bg-surface-container rounded-3xl overflow-hidden flex flex-col border border-white/5">
+<div class="h-48 relative">
+<img alt="Old Family Photos" class="w-full h-full object-cover" data-alt="stack of vintage black and white family photographs tied together with a simple jute twine string on an aged wood surface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6Or2MZan9uobVrWl1DP96dE3tz5F9Y00fY-Tzwfm_r-pbo-sF0i5koQQfuOco70AR27LY13Z1hDM9nhCuBGX8IMvtGwyTAHGEC7bOEkFcDJ8x-TwhFxa54QTqNmwHN7gBWes00ZsnqMN4KzOdIIcCq2Bs-RD26xxgLdIkHox13jjoL7RU9lY4XQeM5zvX_M6a9AI564JzI8nVzxa8V1RfrwsZ7SH4xyXh_iJntOvh8FRakd4YKJj3EQjX1Wr8aWTd981KL1ukQRQ"/>
+<div class="absolute inset-0 bg-black/20"></div>
+</div>
+<div class="p-6">
+<h4 class="font-headline text-lg font-bold mb-2">Summer of '58 Collection</h4>
+<p class="font-body text-sm text-on-surface-variant mb-4 line-clamp-2">A curated digital album of the legendary family reunion in Marseille...</p>
+<div class="flex items-center justify-between">
+<span class="font-label text-xs text-primary font-bold uppercase tracking-wider">Family</span>
+<span class="material-symbols-outlined text-on-surface-variant">arrow_forward</span>
+</div>
+</div>
+</div>
+<!-- Small Artifact Card 4 -->
+<div class="md:col-span-4 bg-surface-container rounded-3xl overflow-hidden flex flex-col border border-white/5">
+<div class="h-48 relative">
+<img alt="Folklore Tales" class="w-full h-full object-cover" data-alt="ethereal silhouette of an ancient tree at twilight against a deep violet and indigo sky with glowing fireflies" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJ97fLoKDm945hA9ubscI2WHk8HuJd-6OgeecEe7rLcl-5alLlV7pXoTgEVTi5sCKpQJ5c9pvMhRqiJBWrouCnToMLDYCWD2394g2xRizex3-nf2QSbcCceRngXyJgEkpbPRdGwTg1II2IDJohgmCVD1g2eBBJ2Bic0KC0S-__Bj1IupE1y4aDJKW7CRcp7MUMPb47MHZP5LRaW2Vs4dpkrQupzUsIuZTv1IKpz2MLrjCD7IBTR0YLZ2232t8OSXjHe8CH7-Edp6E"/>
+<div class="absolute inset-0 bg-black/20"></div>
+</div>
+<div class="p-6">
+<h4 class="font-headline text-lg font-bold mb-2">Legends of the Whispering Wood</h4>
+<p class="font-body text-sm text-on-surface-variant mb-4 line-clamp-2">Oral recording of Great-Aunt Martha sharing local folk myths...</p>
+<div class="flex items-center justify-between">
+<span class="font-label text-xs text-primary font-bold uppercase tracking-wider">Folklore</span>
+<span class="material-symbols-outlined text-on-surface-variant">arrow_forward</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-8 pt-4 bg-stone-50/90 dark:bg-stone-950/90 backdrop-blur-2xl rounded-t-[2rem] z-50 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-2 opacity-70 hover:opacity-100 hover:text-orange-500 dark:hover:text-orange-300" href="#">
+<span class="material-symbols-outlined">home_storage</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-2xl px-5 py-2 scale-105 transition-all" href="#">
+<span class="material-symbols-outlined filled-icon">auto_stories</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider">Vault</span>
+</a>
+<div class="relative -top-8">
+<button class="w-16 h-16 signature-gradient rounded-full shadow-2xl flex items-center justify-center text-on-primary-container active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-3xl">mic</span>
+</button>
+</div>
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-2 opacity-70 hover:opacity-100 hover:text-orange-500 dark:hover:text-orange-300" href="#">
+<span class="material-symbols-outlined">temp_preferences_custom</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider">Guide</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-2 opacity-70 hover:opacity-100 hover:text-orange-500 dark:hover:text-orange-300" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-['Manrope'] text-[11px] font-semibold uppercase tracking-wider">Settings</span>
+</a>
+</nav>
+</body></html>

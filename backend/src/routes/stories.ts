@@ -1,9 +1,28 @@
-import express, { Request, Response } from 'express';
+/**
+ * SECURITY: Story Routes
+ *
+ * Implements secure story access with:
+ * - Role-based visibility (guests, users, moderators, admins)
+ * - Ownership verification for edits
+ * - Input validation on all updates
+ * - Query parameter sanitization
+ *
+ * OWASP Reference: A01:2021 - Broken Access Control
+ */
+
+import express, { Response } from 'express';
 import { optionalAuth, requireAuth, AuthenticatedRequest } from '../middleware/auth';
 import { supabaseAdmin as supabase } from '../config/supabase';
+import {
+  validate,
+  storyQuerySchema,
+  storyUpdateSchema,
+  uuidParamSchema,
+} from '../middleware/validate';
 
 const router = express.Router();
 
+// SECURITY: Select statement for story queries (no sensitive fields)
 const STORY_SELECT = `
   *,
   storytellers (*),
@@ -13,106 +32,176 @@ const STORY_SELECT = `
   story_tags ( tags (*) )
 `;
 
-// Get all stories — visibility filtered by role
-router.get('/', optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { language, country, storyteller_id, theme, age_group } = req.query;
-    const role   = req.user?.role;
-    const userId = req.user?.id;
+/**
+ * GET /api/stories
+ * SECURITY: Get all stories with role-based visibility filtering
+ */
+router.get(
+  '/',
+  optionalAuth,
+  validate(storyQuerySchema, 'query'),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { language, country, storyteller_id, theme, age_group, page, limit } =
+        req.query as unknown as {
+          language?: string;
+          country?: string;
+          storyteller_id?: string;
+          theme?: string;
+          age_group?: string;
+          page: number;
+          limit: number;
+        };
 
-    let query = supabase
-      .from('stories')
-      .select(STORY_SELECT)
-      .order('created_at', { ascending: false });
+      const role = req.user?.role;
+      const userId = req.user?.id;
 
-    if (role === 'admin' || role === 'moderator') {
-      // See all stories regardless of status
-    } else if (userId) {
-      // Authenticated users: approved stories + their own (any status)
-      query = (query as any).or(`moderation_status.eq.approved,uploaded_by.eq.${userId}`);
-    } else {
-      // Guests: approved only
-      query = query.eq('moderation_status', 'approved');
+      let query = supabase
+        .from('stories')
+        .select(STORY_SELECT, { count: 'exact' })
+        .order('created_at', { ascending: false });
+
+      // SECURITY: Role-based visibility filtering
+      if (role === 'admin' || role === 'moderator') {
+        // Moderators and admins see all stories
+      } else if (userId) {
+        // SECURITY: Authenticated users see approved stories + their own
+        query = (query as any).or(
+          `moderation_status.eq.approved,uploaded_by.eq.${userId}`
+        );
+      } else {
+        // SECURITY: Guests see only approved stories
+        query = query.eq('moderation_status', 'approved');
+      }
+
+      // SECURITY: Apply validated filters (already sanitized)
+      if (language) query = query.ilike('language', language);
+      if (country) query = query.ilike('country', country);
+      if (storyteller_id) query = query.eq('storyteller_id', storyteller_id);
+      if (theme) query = query.ilike('theme', `%${theme}%`);
+      if (age_group) query = query.ilike('age_group', age_group);
+
+      // SECURITY: Apply pagination
+      const offset = (page - 1) * limit;
+      query = query.range(offset, offset + limit - 1);
+
+      const { data, error, count } = await query;
+
+      if (error) throw error;
+
+      res.json({
+        stories: data ?? [],
+        total: count ?? 0,
+        page,
+        limit,
+        totalPages: Math.ceil((count || 0) / limit),
+      });
+    } catch (error: any) {
+      console.error('Story list error:', error);
+      res.status(500).json({ error: 'Failed to fetch stories.' });
     }
-
-    if (language)       query = query.ilike('language', language as string);
-    if (country)        query = query.ilike('country', country as string);
-    if (storyteller_id) query = query.eq('storyteller_id', storyteller_id as string);
-    if (theme)          query = query.ilike('theme', `%${theme}%`);
-    if (age_group)      query = query.ilike('age_group', age_group as string);
-
-    const { data, error } = await query;
-    if (error) throw error;
-    res.json(data);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
   }
-});
+);
 
-// Get single story by ID
-router.get('/:id', optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { data, error } = await supabase
-      .from('stories')
-      .select(STORY_SELECT)
-      .eq('id', req.params.id)
-      .single();
+/**
+ * GET /api/stories/:id
+ * SECURITY: Get single story with access control
+ */
+router.get(
+  '/:id',
+  optionalAuth,
+  validate(uuidParamSchema, 'params'),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { data, error } = await supabase
+        .from('stories')
+        .select(STORY_SELECT)
+        .eq('id', req.params.id)
+        .single();
 
-    if (error || !data) return res.status(404).json({ error: 'Story not found.' });
+      if (error || !data) {
+        return res.status(404).json({ error: 'Story not found.' });
+      }
 
-    const role     = req.user?.role;
-    const userId   = req.user?.id;
-    const isOwner  = data.uploaded_by === userId;
-    const isMod    = role === 'admin' || role === 'moderator';
+      const role = req.user?.role;
+      const userId = req.user?.id;
+      const isOwner = data.uploaded_by === userId;
+      const isMod = role === 'admin' || role === 'moderator';
 
-    if (!isMod && !isOwner && data.moderation_status !== 'approved') {
-      return res.status(404).json({ error: 'Story not found.' });
+      // SECURITY: Check access permissions
+      if (!isMod && !isOwner && data.moderation_status !== 'approved') {
+        // Don't reveal that the story exists but is not approved
+        return res.status(404).json({ error: 'Story not found.' });
+      }
+
+      res.json(data);
+    } catch (error: any) {
+      console.error('Story fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch story.' });
     }
-
-    res.json(data);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
   }
-});
+);
 
-// Update story (owner or mod+)
-router.patch('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { data: existing, error: fetchErr } = await supabase
-      .from('stories')
-      .select('uploaded_by')
-      .eq('id', req.params.id)
-      .single();
+/**
+ * PATCH /api/stories/:id
+ * SECURITY: Update story (owner or moderator only)
+ */
+router.patch(
+  '/:id',
+  requireAuth,
+  validate(uuidParamSchema, 'params'),
+  validate(storyUpdateSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      // SECURITY: Fetch story to check ownership
+      const { data: existing, error: fetchErr } = await supabase
+        .from('stories')
+        .select('uploaded_by')
+        .eq('id', req.params.id)
+        .single();
 
-    if (fetchErr || !existing) return res.status(404).json({ error: 'Story not found.' });
+      if (fetchErr || !existing) {
+        return res.status(404).json({ error: 'Story not found.' });
+      }
 
-    const isMod   = req.user!.role === 'admin' || req.user!.role === 'moderator';
-    const isOwner = existing.uploaded_by === req.user!.id;
+      const isMod = req.user!.role === 'admin' || req.user!.role === 'moderator';
+      const isOwner = existing.uploaded_by === req.user!.id;
 
-    if (!isOwner && !isMod) {
-      return res.status(403).json({ error: 'Not authorised to edit this story.' });
+      // SECURITY: Authorization check
+      if (!isOwner && !isMod) {
+        return res.status(403).json({ error: 'Not authorized to edit this story.' });
+      }
+
+      // SECURITY: Regular users cannot modify moderation fields
+      const updateData = { ...req.body };
+      if (!isMod) {
+        delete updateData.moderation_status;
+        delete updateData.moderation_note;
+        delete updateData.is_published;
+        delete updateData.moderated_by;
+        delete updateData.moderated_at;
+      }
+
+      // SECURITY: Normalize theme to lowercase
+      if (updateData.theme) {
+        updateData.theme = updateData.theme.toLowerCase().trim();
+      }
+
+      const { data, error } = await supabase
+        .from('stories')
+        .update(updateData)
+        .eq('id', req.params.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      res.json(data);
+    } catch (error: any) {
+      console.error('Story update error:', error);
+      res.status(500).json({ error: 'Failed to update story.' });
     }
-
-    // Regular users cannot touch moderation fields
-    if (!isMod) {
-      delete req.body.moderation_status;
-      delete req.body.moderation_note;
-      delete req.body.is_published;
-      delete req.body.moderated_by;
-    }
-
-    const { data, error } = await supabase
-      .from('stories')
-      .update(req.body)
-      .eq('id', req.params.id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    res.json(data);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
   }
-});
+);
 
 export default router;

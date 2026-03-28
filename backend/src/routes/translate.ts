@@ -1,47 +1,64 @@
+/**
+ * SECURITY: Dialect Translation Route
+ *
+ * Implements secure translation with:
+ * - Rate limiting (20 AI requests / min)
+ * - Input validation with length limits
+ * - Dialect enum validation
+ * - External API error handling
+ *
+ * OWASP Reference: A04:2021 - Insecure Design (API Rate Limiting)
+ */
+
 import { Router, Request, Response } from 'express';
 import { translateDialectText } from '../services/ai';
-import { searchLimiter } from '../middleware/rateLimiter';
+import { aiLimiter } from '../middleware/rateLimiter';
+import { validate, translateSchema } from '../middleware/validate';
 
 const router = Router();
 
-const SUPPORTED_DIALECTS = [
-  'Jamaican Patois',
-  'Trinidadian Slang',
-  'Nigerian Pidgin',
-  'Louisiana Creole',
-  'Haitian Kreyòl',
-];
+// SECURITY: Apply AI-specific rate limiting
+router.use(aiLimiter);
 
 /**
  * POST /api/translate
+ * SECURITY: Translate dialect text to English
+ *
  * Body: { text: string, sourceDialect: string }
  * Returns: { translation: string, sourceDialect: string }
  */
-router.post('/', searchLimiter, async (req: Request, res: Response) => {
-  const { text, sourceDialect } = req.body;
+router.post(
+  '/',
+  validate(translateSchema, 'body', { contentFields: ['text'] }),
+  async (req: Request, res: Response) => {
+    const { text, sourceDialect } = req.body;
 
-  if (!text || typeof text !== 'string' || !text.trim()) {
-    return res.status(400).json({ error: 'text is required' });
-  }
-  if (!sourceDialect || !SUPPORTED_DIALECTS.includes(sourceDialect)) {
-    return res.status(400).json({
-      error: `sourceDialect must be one of: ${SUPPORTED_DIALECTS.join(', ')}`,
-    });
-  }
-  if (text.trim().length > 2000) {
-    return res.status(400).json({ error: 'text must be 2000 characters or fewer' });
-  }
+    try {
+      // SECURITY: Text is already validated and sanitized
+      const result = await translateDialectText(text, sourceDialect);
 
-  try {
-    const result = await translateDialectText(text.trim(), sourceDialect);
-    return res.json({ translation: result.translation, sourceDialect });
-  } catch (err: any) {
-    const msg = err?.message || 'Translation failed';
-    if (msg.toLowerCase().includes('rate limit') || msg.toLowerCase().includes('429')) {
-      return res.status(429).json({ error: 'Rate limit reached. Please wait a moment and try again.' });
+      return res.json({
+        translation: result.translation,
+        sourceDialect,
+      });
+    } catch (err: any) {
+      const msg = err?.message || 'Translation failed';
+
+      // SECURITY: Handle external API rate limits gracefully
+      if (msg.toLowerCase().includes('rate limit') || msg.toLowerCase().includes('429')) {
+        return res.status(429).json({
+          error: 'Rate limit reached. Please wait a moment and try again.',
+          retryAfter: 60,
+        });
+      }
+
+      // SECURITY: Don't expose internal error details
+      console.error('Translation error:', err);
+      return res.status(500).json({
+        error: 'Translation service temporarily unavailable. Please try again.',
+      });
     }
-    return res.status(500).json({ error: msg });
   }
-});
+);
 
 export default router;

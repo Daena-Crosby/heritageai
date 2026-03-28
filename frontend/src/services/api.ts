@@ -82,6 +82,14 @@ export interface ProcessingJob {
 // Stories
 // ============================
 
+export interface PaginatedResponse<T> {
+  stories: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export const getStories = async (filters?: {
   language?: string;
   country?: string;
@@ -89,9 +97,13 @@ export const getStories = async (filters?: {
   age_group?: string;
   page?: number;
   limit?: number;
-}) => {
-  const response = await api.get<Story[]>('/stories', { params: filters });
-  return response.data;
+}): Promise<Story[]> => {
+  const response = await api.get<PaginatedResponse<Story>>('/stories', { params: filters });
+  // Handle both old array format and new paginated format for backwards compatibility
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+  return response.data.stories ?? [];
 };
 
 export const getStory = async (id: string) => {
@@ -99,9 +111,13 @@ export const getStory = async (id: string) => {
   return response.data;
 };
 
-export const searchStories = async (query: string) => {
-  const response = await api.get<Story[]>('/search', { params: { q: query } });
-  return response.data;
+export const searchStories = async (query: string): Promise<Story[]> => {
+  const response = await api.get<PaginatedResponse<Story> | Story[]>('/search', { params: { q: query } });
+  // Handle both old array format and new paginated format for backwards compatibility
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+  return response.data.stories ?? [];
 };
 
 export const uploadStoryText = async (

@@ -169,3 +169,23 @@ private-key.pem
 # ============================
 # vite build output already covered by dist/ above
 .claude/
+
+# ============================
+# Security Documentation — NEVER commit
+# ============================
+# Security audit reports contain sensitive implementation details
+SECURITY_AUDIT.md
+**/SECURITY_AUDIT.md
+security-audit*.md
+**/security-audit*.md
+penetration-test*.md
+vulnerability-report*.md
+
+# ============================
+# Editor Backup Files
+# ============================
+*-safeBackup-*.ts
+*-safeBackup-*.js
+*-safeBackup-*.json
+*.backup
+*.bak

@@ -1,13 +1,44 @@
+/**
+ * SECURITY: Upload Routes
+ *
+ * Implements secure file uploads with:
+ * - Strict MIME type whitelisting
+ * - File size limits (50MB audio, 10MB docs)
+ * - Rate limiting (10 uploads/hour)
+ * - Input validation on metadata
+ * - Security event logging
+ *
+ * OWASP References:
+ * - A04:2021 - Insecure Design (File Upload)
+ * - A03:2021 - Injection (Input Validation)
+ */
+
 import express, { Request, Response } from 'express';
 import multer from 'multer';
 import mammoth from 'mammoth';
-import { createStoryteller, createStory, createMedia, createTranslation, createIllustration, linkStoryToTag, getTagByName, createTag } from '../services/database';
+import {
+  createStoryteller,
+  createStory,
+  createMedia,
+  createTranslation,
+  createIllustration,
+  linkStoryToTag,
+  getTagByName,
+  createTag,
+} from '../services/database';
 import { uploadAudioFile, uploadImageFile } from '../services/storage';
-import { transcribeAudio, translateText, generateIllustration, generateSubtitles, suggestThemes } from '../services/ai';
+import {
+  transcribeAudio,
+  translateText,
+  generateIllustration,
+  generateSubtitles,
+  suggestThemes,
+} from '../services/ai';
 import { generateVideo } from '../services/video';
 import { optionalAuth, AuthenticatedRequest } from '../middleware/auth';
 import { uploadLimiter } from '../middleware/rateLimiter';
 import { validate, storyUploadSchema } from '../middleware/validate';
+import { logFileUpload } from '../middleware/securityLogger';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -95,6 +126,9 @@ router.post('/audio', uploadLimiter, optionalAuth, audioUpload.single('audio'), 
     if (!req.file) {
       return res.status(400).json({ error: 'No audio file provided' });
     }
+
+    // SECURITY: Log file upload event
+    logFileUpload(req, req.file.originalname, req.file.mimetype, req.file.size);
 
     const { title, storytellerName, storytellerLocation, storytellerDialect, ageGroup, country, language, theme } = req.body;
     const uploadedBy = req.user?.id;
@@ -228,6 +262,9 @@ router.post('/document', uploadLimiter, optionalAuth, docUpload.single('document
     if (!req.file) {
       return res.status(400).json({ error: 'No document file provided' });
     }
+
+    // SECURITY: Log file upload event
+    logFileUpload(req, req.file.originalname, req.file.mimetype, req.file.size);
 
     // Extract text from document
     let extractedText = '';

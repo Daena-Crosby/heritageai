@@ -48,14 +48,29 @@ Filters use `ilike` (case-insensitive) so "Moral", "MORAL", and "moral" all matc
 ### Audio MIME types — iOS sends `audio/x-m4a`
 The allowed list in `routes/upload.ts` includes `audio/x-m4a` and `audio/aac` for iOS compatibility. Do not remove these.
 
-### Rate limiting is applied per route
-- General: 100 req / 15 min
-- Upload: 10 uploads / hour
-- Search: 60 req / min
-- Auth: 10 req / 15 min (brute-force protection)
+### Rate limiting is applied per route (IP + user-based)
+Rate limiting uses combined IP and user-based tracking to prevent abuse:
 
-### Input validation uses Zod
-All request bodies go through Zod schemas defined in `middleware/validate.ts`. Add new schemas there and use the `validate(schema)` middleware factory.
+| Tier | Limit | Window | Applied To |
+|------|-------|--------|------------|
+| General | 100 req | 15 min | All routes (global) |
+| Auth | 10 failed | 15 min | Login/register (only counts failures) |
+| Upload | 10 uploads | 1 hour | File uploads |
+| Search | 60 req | 1 min | Search, translate, guide |
+| Comments | 30 req | 5 min | Comment operations |
+| AI | 20 req | 1 min | Translation, cultural guide |
+| Sensitive | 5 req | 1 min | Admin/moderation actions |
+
+All rate limiters return proper `429` responses with `Retry-After` headers and `RateLimit-*` standard headers.
+
+### Input validation and sanitization uses Zod
+All request bodies go through Zod schemas defined in `middleware/validate.ts`. The validation middleware:
+- Validates input against schemas with strict mode (rejects unexpected fields)
+- Sanitizes all string inputs to prevent XSS (HTML entity encoding)
+- Enforces length limits on all text fields
+- Uses UUID validation for all ID parameters
+
+Add new schemas in `validate.ts` and use the `validate(schema, source, options)` middleware factory.
 
 ### AI provider split — HuggingFace vs Groq
 Two separate AI providers are used:
@@ -149,16 +164,20 @@ The app supports **dark mode and light mode**, toggled by the user via the sideb
 | `api-inference.huggingface.co is no longer supported` | HuggingFace SDK v2.x uses deprecated URL | Do not use SDK for translation/guide — use Groq via direct axios calls instead |
 | `Property 'C' doesn't exist` (runtime crash) | `StyleSheet.create()` referenced `C.*` from `useTheme()` at module load time | Move all theme color values to inline JSX style props; keep `StyleSheet` for structural/static values only |
 | Translation or Guide returns "Not Found" | HuggingFace models not available on free tier | Already migrated to Groq — ensure `GROQ_API_KEY` is set in `backend/.env` |
+| `stories.slice is not a function` | API response format changed to paginated | Frontend `api.ts` now handles both array and `{ stories: [], total, page }` formats |
+| `429 Too Many Requests` | Rate limit exceeded | Wait for `Retry-After` seconds; check rate limit tier in `rateLimiter.ts` |
 
 ## File Responsibilities
 
 | File | Purpose |
 |------|---------|
-| `backend/src/index.ts` | Express app entry — wires helmet, CORS, rate limiting, all routes |
+| `backend/src/index.ts` | Express app entry — wires Helmet, CORS, rate limiting, security logging, all routes |
 | `backend/src/config/supabase.ts` | Exports `supabase` (anon) and `supabaseAdmin` (service role) |
-| `backend/src/middleware/auth.ts` | `requireAuth`, `optionalAuth`, `requireAdmin` |
-| `backend/src/middleware/rateLimiter.ts` | 4 rate limit tiers |
-| `backend/src/middleware/validate.ts` | Zod schemas + `validate()` factory |
+| `backend/src/middleware/auth.ts` | `requireAuth`, `optionalAuth`, `requireModerator`, `requireAdmin` |
+| `backend/src/middleware/rateLimiter.ts` | 7 rate limit tiers with IP + user-based tracking |
+| `backend/src/middleware/validate.ts` | Zod schemas + `validate()` factory + HTML sanitization |
+| `backend/src/middleware/securityLogger.ts` | Security event logging, request ID tracking, suspicious pattern detection |
+| `backend/src/middleware/errorHandler.ts` | Secure error handling without exposing internal details |
 | `backend/src/services/database.ts` | All Supabase table operations |
 | `backend/src/services/ai.ts` | Whisper + BART + Stable Diffusion (HF SDK); dialect translation + Cultural Guide (Groq/axios) |
 | `backend/src/services/storage.ts` | Supabase Storage upload helpers |
@@ -182,10 +201,50 @@ The app supports **dark mode and light mode**, toggled by the user via the sideb
 | `frontend/App.tsx` | Navigation + auth state management |
 
 ## Security Rules — Do Not Break
+
+### API Keys & Secrets
 - `SUPABASE_SERVICE_ROLE_KEY` must never be sent to the frontend or logged
 - `GROQ_API_KEY` must never be sent to the frontend or logged
+- `HUGGINGFACE_API_TOKEN` must never be sent to the frontend or logged
+- All secrets are validated at startup via `validateRequiredEnvVars()` in `securityLogger.ts`
+
+### Authentication & Authorization
 - All backend DB writes use `supabaseAdmin` (service role)
 - Auth routes use the anon client for Supabase Auth only
 - JWTs are stored in `expo-secure-store` (encrypted), not AsyncStorage
+- Role-based access control: `user`, `moderator`, `admin`
+- Ownership verification on all user-specific resources
+
+### Input Validation & Sanitization
+- All user inputs pass through Zod validation with strict mode
+- All string inputs are HTML-sanitized to prevent XSS
 - File uploads validate MIME type and enforce size limits (50MB audio, 10MB docs)
-- All user inputs pass through Zod validation before use
+- UUID validation on all ID parameters
+- Pagination limits enforced (max 100 items per page)
+
+### Rate Limiting
+- Combined IP + user-based rate limiting on all endpoints
+- Auth routes only count failed attempts (successful logins don't consume quota)
+- Graceful 429 responses with `Retry-After` headers
+- Sensitive operations (admin/moderation) have stricter limits
+
+### Security Logging
+- Request ID tracking for log correlation (`X-Request-ID` header)
+- Auth success/failure logging
+- Rate limit violation logging
+- Suspicious pattern detection (SQL injection, XSS, path traversal)
+- Admin action audit logging
+- File upload logging
+
+### Error Handling
+- Production errors return safe messages without internal details
+- Stack traces only shown in development mode
+- No-cache headers on error responses
+- Request ID included for support correlation
+
+### Security Headers (via Helmet)
+- Content-Security-Policy configured
+- Strict-Transport-Security (HSTS) enabled
+- X-Frame-Options: DENY
+- X-Content-Type-Options: nosniff
+- Referrer-Policy: strict-origin-when-cross-origin

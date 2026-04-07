@@ -49,6 +49,7 @@ export interface Translation {
   story_id: string;
   original_text?: string;
   translated_text: string;
+  synopsis?: string;
   subtitles?: Array<{ start: number; end: number; text: string }>;
 }
 

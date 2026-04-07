@@ -157,6 +157,24 @@ export const VideoMode: React.FC<VideoModeProps> = ({ story }) => {
     );
   }
 
+  // Show error message if video generation failed
+  if (processing?.status === 'completed' && processing.error_message?.includes('Video generation failed')) {
+    return (
+      <View style={[styles.errorContainer, { backgroundColor: C.surfaceContainer }]}>
+        <Ionicons name="alert-circle" size={48} color={C.orange} />
+        <Text style={[styles.errorTitle, { color: C.text, fontFamily: fonts.manrope.semibold }]}>
+          Video Not Available
+        </Text>
+        <Text style={[styles.errorText, { color: C.textMuted, fontFamily: fonts.manrope.regular }]}>
+          Video generation encountered an error. This story is available in audio-only mode.
+        </Text>
+        <Text style={[styles.errorDetail, { color: C.textSub, fontFamily: fonts.manrope.regular }]}>
+          {processing.error_message}
+        </Text>
+      </View>
+    );
+  }
+
   // Video ready
   if (videoFile) {
     return (
@@ -283,6 +301,28 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     borderRadius: 3,
+  },
+  // Error State
+  errorContainer: {
+    padding: spacing.xl,
+    borderRadius: borderRadius.xl,
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  errorTitle: {
+    fontSize: 18,
+    marginTop: spacing.sm,
+  },
+  errorText: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  errorDetail: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+    fontStyle: 'italic',
   },
   // Video Mode
   videoContainer: {

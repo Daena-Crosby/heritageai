@@ -25,14 +25,19 @@ import {
   linkStoryToTag,
   getTagByName,
   createTag,
+  createProcessingJob,
+  updateProcessingJob,
+  ProcessingJob,
 } from '../services/database';
 import { uploadAudioFile, uploadImageFile } from '../services/storage';
 import {
   transcribeAudio,
   translateText,
+  translateDialectText,
   generateIllustration,
   generateSubtitles,
   suggestThemes,
+  generateSynopsis,
 } from '../services/ai';
 import { generateVideo } from '../services/video';
 import { optionalAuth, AuthenticatedRequest } from '../middleware/auth';
@@ -88,40 +93,94 @@ async function processTextPipeline(
   originalText: string,
   language: string
 ) {
-  const translatedText = language.toLowerCase().includes('english')
-    ? originalText
-    : await translateText(originalText);
+  let job: ProcessingJob | undefined;
 
-  const translation = await createTranslation({
-    story_id: storyId,
-    original_text: originalText,
-    translated_text: translatedText,
-    subtitles: [],
-  });
+  try {
+    // Create processing job
+    job = await createProcessingJob(storyId);
 
-  const suggestedThemes = await suggestThemes(translatedText);
-  for (const themeName of suggestedThemes) {
-    let tag = await getTagByName(themeName);
-    if (!tag) tag = await createTag({ name: themeName });
-    if (tag.id) await linkStoryToTag(storyId, tag.id);
+    // Update job: Starting translation (30%)
+    await updateProcessingJob(job.id, {
+      status: 'processing',
+      current_step: 'translation',
+      progress_pct: 30,
+    });
+
+    const translatedText = language.toLowerCase().includes('english')
+      ? originalText
+      : (await translateDialectText(originalText, language)).translation;
+
+    console.log('[TEXT PIPELINE] Original length:', originalText.length, 'Translated length:', translatedText.length);
+
+    // Generate AI synopsis
+    const synopsis = await generateSynopsis(translatedText);
+    console.log('[TEXT PIPELINE] Synopsis generated, length:', synopsis.length);
+
+    const translation = await createTranslation({
+      story_id: storyId,
+      original_text: originalText,
+      translated_text: translatedText,
+      synopsis,
+      subtitles: [],
+    });
+    console.log('[TEXT PIPELINE] Translation created:', translation.id);
+
+    // Update job: Starting theme detection (50%)
+    await updateProcessingJob(job.id, {
+      current_step: 'themes',
+      progress_pct: 50,
+    });
+
+    const suggestedThemes = await suggestThemes(translatedText);
+    for (const themeName of suggestedThemes) {
+      let tag = await getTagByName(themeName);
+      if (!tag) tag = await createTag({ name: themeName });
+      if (tag.id) await linkStoryToTag(storyId, tag.id);
+    }
+
+    // Update job: Starting illustrations (70%)
+    await updateProcessingJob(job.id, {
+      current_step: 'illustrations',
+      progress_pct: 70,
+    });
+
+    const sentences = translatedText.split(/[.!?]+/).filter((s) => s.trim().length > 0);
+    const illustrations: string[] = [];
+    for (let i = 0; i < Math.min(sentences.length, 10); i++) {
+      const illustrationBuffer = await generateIllustration(sentences[i].trim(), storyId, i + 1);
+      const imageUrl = await uploadImageFile(illustrationBuffer, `${storyId}_page_${i + 1}.png`, storyId);
+      await createIllustration({ story_id: storyId, image_url: imageUrl, page_number: i + 1 });
+      illustrations.push(imageUrl);
+    }
+
+    // Mark job as completed (no video for text uploads)
+    await updateProcessingJob(job.id, {
+      status: 'completed',
+      progress_pct: 100,
+      completed_at: new Date().toISOString(),
+    });
+
+    return { translation, suggestedThemes, illustrations };
+
+  } catch (error: any) {
+    // Mark job as failed if it exists
+    if (job) {
+      await updateProcessingJob(job.id, {
+        status: 'failed',
+        error_message: error.message,
+        completed_at: new Date().toISOString(),
+      }).catch((err) => console.error('Failed to update job status:', err));
+    }
+    throw error; // Re-throw to be handled by route handler
   }
-
-  const sentences = translatedText.split(/[.!?]+/).filter((s) => s.trim().length > 0);
-  const illustrations: string[] = [];
-  for (let i = 0; i < Math.min(sentences.length, 10); i++) {
-    const illustrationBuffer = await generateIllustration(sentences[i].trim(), storyId, i + 1);
-    const imageUrl = await uploadImageFile(illustrationBuffer, `${storyId}_page_${i + 1}.png`, storyId);
-    await createIllustration({ story_id: storyId, image_url: imageUrl, page_number: i + 1 });
-    illustrations.push(imageUrl);
-  }
-
-  return { translation, suggestedThemes, illustrations };
 }
 
 // ============================
 // POST /upload/audio
 // ============================
 router.post('/audio', uploadLimiter, optionalAuth, audioUpload.single('audio'), validate(storyUploadSchema), async (req: AuthenticatedRequest, res: Response) => {
+  let job: ProcessingJob | undefined;
+
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No audio file provided' });
@@ -153,19 +212,54 @@ router.post('/audio', uploadLimiter, optionalAuth, audioUpload.single('audio'), 
       theme: theme?.toLowerCase().trim(),
     });
 
+    // Create processing job immediately after story creation
+    job = await createProcessingJob(story.id!);
+
     const audioFileName = `${story.id}_${Date.now()}.m4a`;
     const audioUrl = await uploadAudioFile(req.file.buffer, audioFileName, story.id!);
     await createMedia({ story_id: story.id!, type: 'audio', file_url: audioUrl });
 
+    // Update job: Starting transcription (10%)
+    await updateProcessingJob(job.id, {
+      status: 'processing',
+      current_step: 'transcription',
+      progress_pct: 10,
+    });
+
     const originalText = await transcribeAudio(req.file.buffer);
-    const translatedText = await translateText(originalText);
+
+    // Update job: Starting translation (30%)
+    await updateProcessingJob(job.id, {
+      current_step: 'translation',
+      progress_pct: 30,
+    });
+
+    console.log('[UPLOAD] Transcription complete, length:', originalText.length);
+    const { translation: translatedText } = await translateDialectText(
+      originalText,
+      language || 'Jamaican Patois'
+    );
+    console.log('[UPLOAD] Translation complete, length:', translatedText.length);
+
+    // Generate AI synopsis
+    const synopsis = await generateSynopsis(translatedText);
+    console.log('[UPLOAD] Synopsis generated, length:', synopsis.length);
+
     const subtitles = await generateSubtitles(req.file.buffer, translatedText);
 
     const translation = await createTranslation({
       story_id: story.id!,
       original_text: originalText,
       translated_text: translatedText,
+      synopsis,
       subtitles,
+    });
+    console.log('[UPLOAD] Translation record created:', translation.id);
+
+    // Update job: Starting theme detection (50%)
+    await updateProcessingJob(job.id, {
+      current_step: 'themes',
+      progress_pct: 50,
     });
 
     const suggestedThemes = await suggestThemes(translatedText);
@@ -174,6 +268,12 @@ router.post('/audio', uploadLimiter, optionalAuth, audioUpload.single('audio'), 
       if (!tag) tag = await createTag({ name: themeName });
       if (tag.id) await linkStoryToTag(story.id!, tag.id);
     }
+
+    // Update job: Starting illustrations (70%)
+    await updateProcessingJob(job.id, {
+      current_step: 'illustrations',
+      progress_pct: 70,
+    });
 
     const sentences = translatedText.split(/[.!?]+/).filter((s) => s.trim().length > 0);
     const illustrations: string[] = [];
@@ -184,15 +284,57 @@ router.post('/audio', uploadLimiter, optionalAuth, audioUpload.single('audio'), 
       illustrations.push(imageUrl);
     }
 
-    generateVideo(audioUrl, story.id!, `${story.id}_video.mp4`)
-      .then(async (videoUrl) => {
-        await createMedia({ story_id: story.id!, type: 'video', file_url: videoUrl });
-      })
-      .catch((err) => console.error('Video generation failed:', err));
+    // Update job: Starting video generation (90%)
+    await updateProcessingJob(job.id, {
+      current_step: 'video',
+      progress_pct: 90,
+    });
 
+    // Start video generation with job tracking (async)
+    const jobId = job.id;
+    const storyId = story.id!;
+    (async () => {
+      try {
+        console.log('[UPLOAD] Starting background video generation for story:', storyId);
+        const videoUrl = await generateVideo(audioUrl, storyId, `${storyId}_video.mp4`);
+        await createMedia({ story_id: storyId, type: 'video', file_url: videoUrl });
+
+        // Mark job as completed
+        await updateProcessingJob(jobId, {
+          status: 'completed',
+          progress_pct: 100,
+          completed_at: new Date().toISOString(),
+        });
+        console.log('[UPLOAD] Video generation completed successfully');
+      } catch (err: any) {
+        console.error('[UPLOAD] Video generation failed:', err.message);
+
+        // Video failed but audio/story succeeded - mark as completed with error note
+        await updateProcessingJob(jobId, {
+          status: 'completed',
+          progress_pct: 100,
+          error_message: `Video generation failed: ${err.message}. Story is available in audio-only mode.`,
+          completed_at: new Date().toISOString(),
+        });
+
+        // Don't throw - allow story to exist without video
+      }
+    })();
+
+    // Return immediately (video generating in background)
     res.status(201).json({ story, translation, audioUrl, illustrations, suggestedThemes, message: 'Story uploaded and processed successfully' });
   } catch (error: any) {
     console.error('Audio upload error:', error);
+
+    // Mark job as failed if it exists
+    if (job) {
+      await updateProcessingJob(job.id, {
+        status: 'failed',
+        error_message: error.message,
+        completed_at: new Date().toISOString(),
+      }).catch((err) => console.error('Failed to update job status:', err));
+    }
+
     res.status(500).json({ error: error.message });
   }
 });

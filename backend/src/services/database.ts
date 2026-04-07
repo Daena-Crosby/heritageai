@@ -37,6 +37,7 @@ export interface Translation {
   story_id: string;
   original_text?: string;
   translated_text: string;
+  synopsis?: string;
   subtitles?: Array<{ start: number; end: number; text: string }>;
   created_at?: string;
 }
@@ -264,7 +265,63 @@ export const searchStories = async (query: string) => {
     `)
     .or(`title.ilike.%${query}%,theme.ilike.%${query}%`)
     .order('created_at', { ascending: false });
-  
+
   if (error) throw error;
+  return data;
+};
+
+// Processing job operations
+export interface ProcessingJob {
+  id: string;
+  story_id: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  current_step: 'transcription' | 'translation' | 'subtitles' | 'themes' | 'illustrations' | 'video' | null;
+  progress_pct: number;
+  error_message: string | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
+export const createProcessingJob = async (storyId: string): Promise<ProcessingJob> => {
+  const { data, error } = await supabase
+    .from('processing_jobs')
+    .insert({
+      story_id: storyId,
+      status: 'pending',
+      current_step: null,
+      progress_pct: 0,
+      error_message: null,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to create processing job: ${error.message}`);
+  return data;
+};
+
+export const updateProcessingJob = async (
+  jobId: string,
+  updates: Partial<Pick<ProcessingJob, 'status' | 'current_step' | 'progress_pct' | 'error_message' | 'completed_at'>>
+): Promise<void> => {
+  const { error } = await supabase
+    .from('processing_jobs')
+    .update(updates)
+    .eq('id', jobId);
+
+  if (error) throw new Error(`Failed to update processing job: ${error.message}`);
+};
+
+export const getProcessingJobByStory = async (storyId: string): Promise<ProcessingJob | null> => {
+  const { data, error } = await supabase
+    .from('processing_jobs')
+    .select('*')
+    .eq('story_id', storyId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    throw new Error(`Failed to get processing job: ${error.message}`);
+  }
   return data;
 };

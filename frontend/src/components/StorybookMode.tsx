@@ -39,10 +39,13 @@ export const StorybookMode: React.FC<StorybookModeProps> = ({ story, showTransla
 
   const displayText = showTranslation && hasEnglish ? englishText : (originalText ?? englishText ?? '');
 
-  const synopsisSource = englishText ?? originalText ?? '';
-  const synopsis = synopsisSource.length > 220
-    ? synopsisSource.slice(0, 220).trimEnd() + '…'
-    : synopsisSource;
+  // Use AI-generated synopsis if available, otherwise fallback to truncation
+  const synopsis = translation?.synopsis?.trim() || (() => {
+    const synopsisSource = englishText ?? originalText ?? '';
+    return synopsisSource.length > 220
+      ? synopsisSource.slice(0, 220).trimEnd() + '…'
+      : synopsisSource;
+  })();
 
   return (
     <View style={styles.container}>
@@ -101,52 +104,56 @@ export const StorybookMode: React.FC<StorybookModeProps> = ({ story, showTransla
         </View>
       )}
 
-      {/* Full Story Text */}
-      {(hasOriginal || hasEnglish) ? (
+      {/* Original Story */}
+      {hasOriginal && (
+        <View style={[styles.card, { backgroundColor: C.surfaceContainer }]}>
+          <View style={styles.storyHeader}>
+            <Text style={[styles.cardLabel, { color: C.orange, fontFamily: fonts.manrope.bold }]}>
+              ORIGINAL STORY
+            </Text>
+            <View style={[styles.langBadge, { backgroundColor: C.orangeGlow }]}>
+              <Ionicons name="mic" size={14} color={C.orange} />
+              <Text style={[styles.langBadgeText, { color: C.orange, fontFamily: fonts.manrope.semibold }]}>
+                {story.language || 'Patois'}
+              </Text>
+            </View>
+          </View>
+
+          <Text style={[styles.storyText, { color: C.text, fontFamily: fonts.manrope.regular }]}>
+            {originalText}
+          </Text>
+        </View>
+      )}
+
+      {/* Translated (English) */}
+      {hasEnglish && hasBoth && (
+        <View style={[styles.card, { backgroundColor: C.surfaceContainer }]}>
+          <View style={styles.storyHeader}>
+            <Text style={[styles.cardLabel, { color: C.orange, fontFamily: fonts.manrope.bold }]}>
+              TRANSLATED (ENGLISH)
+            </Text>
+            <View style={[styles.langBadge, { backgroundColor: C.orangeGlow }]}>
+              <Ionicons name="language" size={14} color={C.orange} />
+              <Text style={[styles.langBadgeText, { color: C.orange, fontFamily: fonts.manrope.semibold }]}>
+                English
+              </Text>
+            </View>
+          </View>
+
+          <Text style={[styles.storyText, { color: C.text, fontFamily: fonts.manrope.regular }]}>
+            {englishText}
+          </Text>
+        </View>
+      )}
+
+      {/* Full Story (if only one version exists) */}
+      {!hasBoth && (hasOriginal || hasEnglish) && (
         <View style={[styles.card, { backgroundColor: C.surfaceContainer }]}>
           <View style={styles.storyHeader}>
             <Text style={[styles.cardLabel, { color: C.orange, fontFamily: fonts.manrope.bold }]}>
               FULL STORY
             </Text>
-
-            {hasBoth && externalShowTranslation === undefined && (
-              <View style={[styles.toggle, { backgroundColor: C.surfaceContainerHigh }]}>
-                <TouchableOpacity
-                  style={[styles.toggleOption, !internalShowTranslation && { backgroundColor: C.orange }]}
-                  onPress={() => setInternalShowTranslation(false)}
-                >
-                  <Text
-                    style={[
-                      styles.toggleText,
-                      {
-                        color: !internalShowTranslation ? '#FFF' : C.textSub,
-                        fontFamily: fonts.manrope.semibold,
-                      },
-                    ]}
-                  >
-                    Original
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.toggleOption, internalShowTranslation && { backgroundColor: C.orange }]}
-                  onPress={() => setInternalShowTranslation(true)}
-                >
-                  <Text
-                    style={[
-                      styles.toggleText,
-                      {
-                        color: internalShowTranslation ? '#FFF' : C.textSub,
-                        fontFamily: fonts.manrope.semibold,
-                      },
-                    ]}
-                  >
-                    English
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {!hasBoth && hasEnglish && (
+            {hasEnglish && (
               <View style={[styles.langBadge, { backgroundColor: C.orangeGlow }]}>
                 <Ionicons name="language" size={14} color={C.orange} />
                 <Text style={[styles.langBadgeText, { color: C.orange, fontFamily: fonts.manrope.semibold }]}>
@@ -160,7 +167,10 @@ export const StorybookMode: React.FC<StorybookModeProps> = ({ story, showTransla
             {displayText}
           </Text>
         </View>
-      ) : (
+      )}
+
+      {/* Processing State */}
+      {!hasOriginal && !hasEnglish && (
         <View style={[styles.card, styles.processingCard, { backgroundColor: C.surfaceContainer }]}>
           <ActivityIndicator color={C.orange} />
           <Text style={[styles.processingTitle, { color: C.text, fontFamily: fonts.manrope.semibold }]}>

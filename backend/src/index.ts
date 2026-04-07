@@ -48,11 +48,26 @@ import {
   validateRequiredEnvVars,
 } from './middleware/securityLogger';
 
+// Service imports
+import { validateFFmpeg } from './services/video';
+
 // Load environment variables first
 dotenv.config();
 
 // SECURITY: Validate required environment variables on startup
 validateRequiredEnvVars();
+
+// Validate FFmpeg availability (async, non-blocking)
+(async () => {
+  try {
+    await validateFFmpeg();
+    console.log('[VIDEO] ✓ FFmpeg is available - video generation enabled');
+  } catch (error: any) {
+    console.warn('[VIDEO] ⚠ FFmpeg is not available - video generation will be disabled');
+    console.warn(`[VIDEO]   ${error.message}`);
+    console.warn('[VIDEO]   Install FFmpeg: https://ffmpeg.org/download.html');
+  }
+})();
 
 const app = express();
 const PORT = process.env.PORT || 3000;

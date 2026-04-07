@@ -1,5 +1,6 @@
 import { HfInference } from '@huggingface/inference';
 import axios from 'axios';
+import FormData from 'form-data';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -7,24 +8,67 @@ dotenv.config();
 const hfToken = process.env.HUGGINGFACE_API_TOKEN;
 const hf = hfToken ? new HfInference(hfToken) : null;
 
-// Whisper transcription using Hugging Face
+// Whisper transcription using Groq API
 export const transcribeAudio = async (audioBuffer: Buffer): Promise<string> => {
-  if (!hf) {
-    console.warn('Hugging Face token not configured, returning placeholder');
-    return 'Transcription requires Hugging Face API token';
+  const groqKey = process.env.GROQ_API_KEY;
+
+  if (!groqKey) {
+    throw new Error('Audio transcription requires GROQ_API_KEY to be configured in backend/.env');
   }
+
   try {
-    // Using Hugging Face's Whisper model
-    const response = await hf.automaticSpeechRecognition({
-      model: 'openai/whisper-base',
-      data: audioBuffer as unknown as Blob,
+    console.log('[TRANSCRIPTION] Starting Groq Whisper transcription, buffer size:', audioBuffer.length);
+
+    // Create form data with audio file
+    const formData = new FormData();
+    formData.append('file', audioBuffer, {
+      filename: 'audio.m4a',
+      contentType: 'audio/m4a',
     });
-    
-    return response.text;
-  } catch (error) {
-    console.error('Transcription error:', error);
-    // Fallback: return placeholder text
-    return 'Transcription in progress...';
+    formData.append('model', 'whisper-large-v3');
+    formData.append('language', 'en'); // Jamaican Patois uses English base
+    formData.append('response_format', 'json');
+
+    const response = await axios.post(
+      'https://api.groq.com/openai/v1/audio/transcriptions',
+      formData,
+      {
+        headers: {
+          'Authorization': `Bearer ${groqKey}`,
+          ...formData.getHeaders(),
+        },
+        timeout: 60000, // 60 second timeout
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+      }
+    );
+
+    const transcription = response.data?.text?.trim();
+
+    if (!transcription || transcription.length === 0) {
+      throw new Error('Groq Whisper returned empty transcription');
+    }
+
+    console.log('[TRANSCRIPTION] Success, transcribed length:', transcription.length);
+    return transcription;
+
+  } catch (error: any) {
+    console.error('[TRANSCRIPTION] Error details:', error?.response?.data || error?.message || error);
+
+    if (error.code === 'ECONNABORTED') {
+      throw new Error('Audio transcription timed out. Please try a shorter audio file (under 60 seconds).');
+    }
+
+    if (error.response?.status === 413) {
+      throw new Error('Audio file is too large. Please upload files under 25MB.');
+    }
+
+    if (error.response?.status === 429) {
+      throw new Error('Transcription rate limit exceeded. Please try again in a few minutes.');
+    }
+
+    const errorMsg = error.response?.data?.error?.message || error.message || 'Unknown error';
+    throw new Error(`Audio transcription failed: ${errorMsg}`);
   }
 };
 
@@ -260,7 +304,7 @@ export const suggestThemes = async (text: string): Promise<string[]> => {
   }
   try {
     const themes = ['folklore', 'moral', 'anansi', 'history', 'tradition', 'legend', 'fable'];
-    
+
     const response = await hf.zeroShotClassification({
       model: 'facebook/bart-large-mnli',
       inputs: text,
@@ -281,5 +325,53 @@ export const suggestThemes = async (text: string): Promise<string[]> => {
   } catch (error) {
     console.error('Theme suggestion error:', error);
     return [];
+  }
+};
+
+// Generate AI synopsis using Groq
+export const generateSynopsis = async (text: string): Promise<string> => {
+  const groqKey = process.env.GROQ_API_KEY;
+  if (!groqKey) {
+    // Fallback to simple truncation if Groq not available
+    return text.length > 220 ? text.slice(0, 220).trimEnd() + '…' : text;
+  }
+
+  try {
+    const response = await axios.post(
+      'https://api.groq.com/openai/v1/chat/completions',
+      {
+        model: 'llama-3.1-8b-instant',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a skilled summarizer. Create a compelling 2-3 sentence synopsis that captures the essence and key themes of the story. Make it engaging and concise.',
+          },
+          {
+            role: 'user',
+            content: `Summarize this story in 2-3 sentences:\n\n${text.substring(0, 2000)}`,
+          },
+        ],
+        max_tokens: 150,
+        temperature: 0.3,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${groqKey}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 15000,
+      }
+    );
+
+    const synopsis = response.data?.choices?.[0]?.message?.content?.trim();
+    if (!synopsis) {
+      // Fallback to truncation
+      return text.length > 220 ? text.slice(0, 220).trimEnd() + '…' : text;
+    }
+    return synopsis;
+  } catch (error: any) {
+    console.error('[SYNOPSIS] Generation error:', error?.response?.data || error.message);
+    // Fallback to simple truncation
+    return text.length > 220 ? text.slice(0, 220).trimEnd() + '…' : text;
   }
 };

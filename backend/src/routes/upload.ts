@@ -44,6 +44,7 @@ import { optionalAuth, AuthenticatedRequest } from '../middleware/auth';
 import { uploadLimiter } from '../middleware/rateLimiter';
 import { validate, storyUploadSchema } from '../middleware/validate';
 import { logFileUpload } from '../middleware/securityLogger';
+import { asyncHandler, ValidationError } from '../middleware/errorHandler';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -178,12 +179,12 @@ async function processTextPipeline(
 // ============================
 // POST /upload/audio
 // ============================
-router.post('/audio', uploadLimiter, optionalAuth, audioUpload.single('audio'), validate(storyUploadSchema), async (req: AuthenticatedRequest, res: Response) => {
+router.post('/audio', uploadLimiter, optionalAuth, audioUpload.single('audio'), validate(storyUploadSchema), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   let job: ProcessingJob | undefined;
 
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'No audio file provided' });
+      throw new ValidationError('No audio file provided');
     }
 
     // SECURITY: Log file upload event
@@ -335,9 +336,10 @@ router.post('/audio', uploadLimiter, optionalAuth, audioUpload.single('audio'), 
       }).catch((err) => console.error('Failed to update job status:', err));
     }
 
-    res.status(500).json({ error: error.message });
+    // Re-throw to be handled by centralized error handler
+    throw error;
   }
-});
+}));
 
 // ============================
 // POST /upload/text  — type a story directly
@@ -353,13 +355,14 @@ const textStorySchema = z.object({
   theme: z.string().max(100).optional(),
 });
 
-router.post('/text', uploadLimiter, optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/text', uploadLimiter, optionalAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const parsed = textStorySchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() });
+    const validationError = new ValidationError('Validation failed');
+    validationError.details = Object.values(parsed.error.flatten().fieldErrors).flat();
+    validationError.fields = parsed.error.flatten().fieldErrors;
+    throw validationError;
   }
-
-  try {
     const { storyText, title, storytellerName, storytellerLocation, ageGroup, country, language, theme } = parsed.data;
     const uploadedBy = req.user?.id;
 
@@ -389,43 +392,38 @@ router.post('/text', uploadLimiter, optionalAuth, async (req: AuthenticatedReque
       language || 'English'
     );
 
-    res.status(201).json({ story, translation, illustrations, suggestedThemes, message: 'Text story saved and processed successfully' });
-  } catch (error: any) {
-    console.error('Text upload error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
+  res.status(201).json({ story, translation, illustrations, suggestedThemes, message: 'Text story saved and processed successfully' });
+}));
 
 // ============================
 // POST /upload/document  — upload .txt or .docx
 // ============================
-router.post('/document', uploadLimiter, optionalAuth, docUpload.single('document'), async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No document file provided' });
-    }
+router.post('/document', uploadLimiter, optionalAuth, docUpload.single('document'), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  if (!req.file) {
+    throw new ValidationError('No document file provided');
+  }
 
-    // SECURITY: Log file upload event
-    logFileUpload(req, req.file.originalname, req.file.mimetype, req.file.size);
+  // SECURITY: Log file upload event
+  logFileUpload(req, req.file.originalname, req.file.mimetype, req.file.size);
 
-    // Extract text from document
-    let extractedText = '';
-    const mime = req.file.mimetype;
+  // Extract text from document
+  let extractedText = '';
+  const mime = req.file.mimetype;
 
-    if (mime === 'text/plain') {
-      extractedText = req.file.buffer.toString('utf-8');
-    } else if (
-      mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-      mime === 'application/msword'
-    ) {
-      const result = await mammoth.extractRawText({ buffer: req.file.buffer });
-      extractedText = result.value;
-    }
+  if (mime === 'text/plain') {
+    extractedText = req.file.buffer.toString('utf-8');
+  } else if (
+    mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    mime === 'application/msword'
+  ) {
+    const result = await mammoth.extractRawText({ buffer: req.file.buffer });
+    extractedText = result.value;
+  }
 
-    extractedText = extractedText.trim();
-    if (extractedText.length < 10) {
-      return res.status(400).json({ error: 'Document appears to be empty or too short.' });
-    }
+  extractedText = extractedText.trim();
+  if (extractedText.length < 10) {
+    throw new ValidationError('Document appears to be empty or too short.');
+  }
 
     const { title, storytellerName, storytellerLocation, ageGroup, country, language, theme } = req.body;
     const uploadedBy = req.user?.id;
@@ -456,11 +454,7 @@ router.post('/document', uploadLimiter, optionalAuth, docUpload.single('document
       language || 'English'
     );
 
-    res.status(201).json({ story, translation, illustrations, suggestedThemes, message: 'Document uploaded and processed successfully' });
-  } catch (error: any) {
-    console.error('Document upload error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
+  res.status(201).json({ story, translation, illustrations, suggestedThemes, message: 'Document uploaded and processed successfully' });
+}));
 
 export default router;

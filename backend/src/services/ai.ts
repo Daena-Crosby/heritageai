@@ -2,6 +2,7 @@ import { HfInference } from '@huggingface/inference';
 import axios from 'axios';
 import FormData from 'form-data';
 import dotenv from 'dotenv';
+import { handleExternalApiError } from '../middleware/errorHandler';
 
 dotenv.config();
 
@@ -231,9 +232,8 @@ export const translateDialectText = async (
     const translation = response.data?.choices?.[0]?.message?.content?.trim() ?? text;
     return { translation };
   } catch (error: any) {
-    console.error('Dialect translation error:', error?.response?.data || error.message);
-    const detail = error?.response?.data?.error?.message || error.message || 'Translation failed';
-    throw new Error(detail);
+    console.error('[TRANSLATION] Error:', error?.response?.data || error?.message);
+    return handleExternalApiError(error, 'Translation service');
   }
 };
 
@@ -290,9 +290,8 @@ export const getCulturalGuideResponse = async (
     if (!reply) throw new Error('Empty response from model');
     return reply;
   } catch (error: any) {
-    console.error('Cultural Guide error:', error?.response?.data || error.message);
-    const detail = error?.response?.data?.error?.message || error.message || 'Guide unavailable';
-    throw new Error(detail);
+    console.error('[CULTURAL_GUIDE] Error:', error?.response?.data || error?.message);
+    return handleExternalApiError(error, 'Cultural Guide service');
   }
 };
 

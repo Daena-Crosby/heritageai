@@ -25,6 +25,7 @@ import {
   logAuthFailure,
   logAuthLogout,
 } from '../middleware/securityLogger';
+import { asyncHandler, AuthenticationError, ValidationError } from '../middleware/errorHandler';
 
 const router = express.Router();
 
@@ -35,7 +36,7 @@ router.use(authLimiter);
  * POST /api/auth/register
  * SECURITY: Creates a new user account with validation
  */
-router.post('/register', validate(registerSchema), async (req: Request, res: Response) => {
+router.post('/register', validate(registerSchema), asyncHandler(async (req: Request, res: Response) => {
   const { email, password, displayName } = req.body;
 
   const { data, error } = await supabase.auth.signUp({
@@ -49,7 +50,7 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
   if (error) {
     // SECURITY: Log registration failures
     logAuthFailure(req, email, 'registration_failed');
-    return res.status(400).json({ error: error.message });
+    throw new ValidationError(error.message);
   }
 
   // SECURITY: Log successful registration
@@ -61,13 +62,13 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
     message: 'Registration successful. Please verify your email.',
     user: { id: data.user?.id, email: data.user?.email },
   });
-});
+}));
 
 /**
  * POST /api/auth/login
  * SECURITY: Authenticates user and returns tokens
  */
-router.post('/login', validate(loginSchema), async (req: Request, res: Response) => {
+router.post('/login', validate(loginSchema), asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -77,7 +78,7 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
     logAuthFailure(req, email, 'invalid_credentials');
 
     // SECURITY: Use generic message to prevent username enumeration
-    return res.status(401).json({ error: 'Invalid credentials.' });
+    throw new AuthenticationError('Invalid credentials.');
   }
 
   // Fetch role from users table for immediate frontend use
@@ -100,13 +101,13 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
       display_name: profile?.display_name,
     },
   });
-});
+}));
 
 /**
  * POST /api/auth/refresh
  * SECURITY: Rotates tokens to maintain session security
  */
-router.post('/refresh', validate(refreshTokenSchema), async (req: Request, res: Response) => {
+router.post('/refresh', validate(refreshTokenSchema), asyncHandler(async (req: Request, res: Response) => {
   const { refreshToken } = req.body;
 
   const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
@@ -114,20 +115,20 @@ router.post('/refresh', validate(refreshTokenSchema), async (req: Request, res: 
   if (error || !data.session) {
     // SECURITY: Log token refresh failures
     logAuthFailure(req, 'unknown', 'invalid_refresh_token');
-    return res.status(401).json({ error: 'Invalid or expired refresh token.' });
+    throw new AuthenticationError('Invalid or expired refresh token.');
   }
 
   res.json({
     token: data.session.access_token,
     refreshToken: data.session.refresh_token,
   });
-});
+}));
 
 /**
  * POST /api/auth/logout
  * SECURITY: Invalidates session server-side
  */
-router.post('/logout', async (req: Request, res: Response) => {
+router.post('/logout', asyncHandler(async (req: Request, res: Response) => {
   const token = req.headers.authorization?.split(' ')[1];
 
   if (token) {
@@ -141,13 +142,13 @@ router.post('/logout', async (req: Request, res: Response) => {
   logAuthLogout(req);
 
   res.json({ message: 'Logged out successfully.' });
-});
+}));
 
 /**
  * POST /api/auth/reset-password
  * SECURITY: Initiates password reset with timing-safe response
  */
-router.post('/reset-password', validate(resetPasswordSchema), async (req: Request, res: Response) => {
+router.post('/reset-password', validate(resetPasswordSchema), asyncHandler(async (req: Request, res: Response) => {
   const { email } = req.body;
 
   // SECURITY: Always perform the operation, even if email doesn't exist
@@ -159,6 +160,6 @@ router.post('/reset-password', validate(resetPasswordSchema), async (req: Reques
   // SECURITY: Always return 200 to prevent email enumeration
   // Attacker cannot determine if email exists in system
   res.json({ message: 'If that email is registered, a reset link has been sent.' });
-});
+}));
 
 export default router;

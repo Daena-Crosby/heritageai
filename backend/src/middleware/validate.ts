@@ -15,6 +15,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { z, ZodSchema, ZodError } from 'zod';
+import { ValidationError } from './errorHandler';
 
 // ============================
 // SECURITY: HTML/XSS Sanitization Helpers
@@ -140,16 +141,14 @@ export const validate = (
       const result = schema.safeParse(sanitizedInput);
 
       if (!result.success) {
-        // SECURITY: Return user-friendly error without exposing internal schema details
+        // SECURITY: Throw validation error to be handled by centralized error handler
         const errors = formatZodError(result.error);
 
-        res.status(400).json({
-          error: 'Validation failed',
-          details: errors,
-          // SECURITY: Include field-level errors for client-side handling
-          fields: result.error.flatten().fieldErrors,
-        });
-        return;
+        const validationError = new ValidationError('Validation failed');
+        validationError.details = errors;
+        // SECURITY: Include field-level errors for client-side handling
+        validationError.fields = result.error.flatten().fieldErrors as Record<string, string[]>;
+        throw validationError;
       }
 
       // SECURITY: Replace request data with validated and sanitized data
@@ -159,7 +158,8 @@ export const validate = (
     } catch (err) {
       // SECURITY: Don't expose internal errors
       console.error('Validation middleware error:', err);
-      res.status(400).json({ error: 'Invalid request data' });
+      // Forward to centralized error handler
+      next(err);
     }
   };
 };

@@ -10,7 +10,58 @@
  * OWASP Reference: A05:2021 - Security Misconfiguration (Error Handling)
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
+
+/**
+ * UTILITY: Async handler wrapper
+ *
+ * Wraps async route handlers to automatically catch errors and forward to error handler.
+ * Eliminates need for try-catch blocks in every route.
+ *
+ * Usage: router.get('/path', asyncHandler(async (req, res) => { ... }))
+ */
+export const asyncHandler = (fn: RequestHandler): RequestHandler => {
+  return (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+};
+
+/**
+ * UTILITY: External API Error Adapter
+ *
+ * Converts external API errors (like Groq, HuggingFace) to our custom error classes.
+ * Properly detects HTTP status codes instead of relying on error message strings.
+ *
+ * @param error - Axios error from external API
+ * @param serviceName - Name of the service for error messages
+ * @throws Custom error with appropriate type
+ */
+export const handleExternalApiError = (error: any, serviceName: string): never => {
+  // Check HTTP status code from external API
+  if (error.response?.status === 429) {
+    throw new RateLimitError(`${serviceName} rate limit exceeded`);
+  }
+
+  if (error.response?.status >= 500) {
+    throw new Error(`${serviceName} temporarily unavailable`);
+  }
+
+  if (error.response?.status >= 400 && error.response?.status < 500) {
+    throw new ValidationError(error.response?.data?.error?.message || `${serviceName} request invalid`);
+  }
+
+  // Check for network/timeout errors
+  if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+    throw new Error(`${serviceName} request timeout`);
+  }
+
+  if (error.code === 'ECONNREFUSED') {
+    throw new Error(`${serviceName} unavailable`);
+  }
+
+  // Fallback with safe message
+  throw new Error(error.response?.data?.error?.message || error.message || `${serviceName} request failed`);
+};
 
 /**
  * SECURITY: Known error types that are safe to expose to clients
@@ -155,6 +206,16 @@ export const errorHandler = (
     requestId, // Include for support correlation
   };
 
+  // Include validation error details for better client-side form handling
+  if (err instanceof ValidationError) {
+    if (err.details) {
+      response.details = err.details;
+    }
+    if (err.fields) {
+      response.fields = err.fields;
+    }
+  }
+
   // SECURITY: Only include details in development mode
   if (isDevelopment) {
     response.debug = {
@@ -175,6 +236,9 @@ export const errorHandler = (
  * SECURITY: Custom error classes for type-safe error handling
  */
 export class ValidationError extends Error {
+  public details?: string[];
+  public fields?: Record<string, string[]>;
+
   constructor(message: string) {
     super(message);
     this.name = 'ValidationError';

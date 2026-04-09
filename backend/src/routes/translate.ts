@@ -14,6 +14,7 @@ import { Router, Request, Response } from 'express';
 import { translateDialectText } from '../services/ai';
 import { aiLimiter } from '../middleware/rateLimiter';
 import { validate, translateSchema } from '../middleware/validate';
+import { asyncHandler } from '../middleware/errorHandler';
 
 const router = Router();
 
@@ -30,35 +31,18 @@ router.use(aiLimiter);
 router.post(
   '/',
   validate(translateSchema, 'body', { contentFields: ['text'] }),
-  async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { text, sourceDialect } = req.body;
 
-    try {
-      // SECURITY: Text is already validated and sanitized
-      const result = await translateDialectText(text, sourceDialect);
+    // SECURITY: Text is already validated and sanitized
+    // Errors are handled by handleExternalApiError in ai.ts and centralized error handler
+    const result = await translateDialectText(text, sourceDialect);
 
-      return res.json({
-        translation: result.translation,
-        sourceDialect,
-      });
-    } catch (err: any) {
-      const msg = err?.message || 'Translation failed';
-
-      // SECURITY: Handle external API rate limits gracefully
-      if (msg.toLowerCase().includes('rate limit') || msg.toLowerCase().includes('429')) {
-        return res.status(429).json({
-          error: 'Rate limit reached. Please wait a moment and try again.',
-          retryAfter: 60,
-        });
-      }
-
-      // SECURITY: Don't expose internal error details
-      console.error('Translation error:', err);
-      return res.status(500).json({
-        error: 'Translation service temporarily unavailable. Please try again.',
-      });
-    }
-  }
+    res.json({
+      translation: result.translation,
+      sourceDialect,
+    });
+  })
 );
 
 export default router;

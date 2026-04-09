@@ -19,6 +19,7 @@ import {
   storyUpdateSchema,
   uuidParamSchema,
 } from '../middleware/validate';
+import { asyncHandler, NotFoundError, AuthorizationError } from '../middleware/errorHandler';
 
 const router = express.Router();
 
@@ -40,67 +41,62 @@ router.get(
   '/',
   optionalAuth,
   validate(storyQuerySchema, 'query'),
-  async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { language, country, storyteller_id, theme, age_group, page, limit } =
-        req.query as unknown as {
-          language?: string;
-          country?: string;
-          storyteller_id?: string;
-          theme?: string;
-          age_group?: string;
-          page: number;
-          limit: number;
-        };
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { language, country, storyteller_id, theme, age_group, page, limit } =
+      req.query as unknown as {
+        language?: string;
+        country?: string;
+        storyteller_id?: string;
+        theme?: string;
+        age_group?: string;
+        page: number;
+        limit: number;
+      };
 
-      const role = req.user?.role;
-      const userId = req.user?.id;
+    const role = req.user?.role;
+    const userId = req.user?.id;
 
-      let query = supabase
-        .from('stories')
-        .select(STORY_SELECT, { count: 'exact' })
-        .order('created_at', { ascending: false });
+    let query = supabase
+      .from('stories')
+      .select(STORY_SELECT, { count: 'exact' })
+      .order('created_at', { ascending: false });
 
-      // SECURITY: Role-based visibility filtering
-      if (role === 'admin' || role === 'moderator') {
-        // Moderators and admins see all stories
-      } else if (userId) {
-        // SECURITY: Authenticated users see approved stories + their own
-        query = (query as any).or(
-          `moderation_status.eq.approved,uploaded_by.eq.${userId}`
-        );
-      } else {
-        // SECURITY: Guests see only approved stories
-        query = query.eq('moderation_status', 'approved');
-      }
-
-      // SECURITY: Apply validated filters (already sanitized)
-      if (language) query = query.ilike('language', language);
-      if (country) query = query.ilike('country', country);
-      if (storyteller_id) query = query.eq('storyteller_id', storyteller_id);
-      if (theme) query = query.ilike('theme', `%${theme}%`);
-      if (age_group) query = query.ilike('age_group', age_group);
-
-      // SECURITY: Apply pagination
-      const offset = (page - 1) * limit;
-      query = query.range(offset, offset + limit - 1);
-
-      const { data, error, count } = await query;
-
-      if (error) throw error;
-
-      res.json({
-        stories: data ?? [],
-        total: count ?? 0,
-        page,
-        limit,
-        totalPages: Math.ceil((count || 0) / limit),
-      });
-    } catch (error: any) {
-      console.error('Story list error:', error);
-      res.status(500).json({ error: 'Failed to fetch stories.' });
+    // SECURITY: Role-based visibility filtering
+    if (role === 'admin' || role === 'moderator') {
+      // Moderators and admins see all stories
+    } else if (userId) {
+      // SECURITY: Authenticated users see approved stories + their own
+      query = (query as any).or(
+        `moderation_status.eq.approved,uploaded_by.eq.${userId}`
+      );
+    } else {
+      // SECURITY: Guests see only approved stories
+      query = query.eq('moderation_status', 'approved');
     }
-  }
+
+    // SECURITY: Apply validated filters (already sanitized)
+    if (language) query = query.ilike('language', language);
+    if (country) query = query.ilike('country', country);
+    if (storyteller_id) query = query.eq('storyteller_id', storyteller_id);
+    if (theme) query = query.ilike('theme', `%${theme}%`);
+    if (age_group) query = query.ilike('age_group', age_group);
+
+    // SECURITY: Apply pagination
+    const offset = (page - 1) * limit;
+    query = query.range(offset, offset + limit - 1);
+
+    const { data, error, count } = await query;
+
+    if (error) throw error;
+
+    res.json({
+      stories: data ?? [],
+      total: count ?? 0,
+      page,
+      limit,
+      totalPages: Math.ceil((count || 0) / limit),
+    });
+  })
 );
 
 /**
@@ -111,35 +107,30 @@ router.get(
   '/:id',
   optionalAuth,
   validate(uuidParamSchema, 'params'),
-  async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { data, error } = await supabase
-        .from('stories')
-        .select(STORY_SELECT)
-        .eq('id', req.params.id)
-        .single();
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { data, error } = await supabase
+      .from('stories')
+      .select(STORY_SELECT)
+      .eq('id', req.params.id)
+      .single();
 
-      if (error || !data) {
-        return res.status(404).json({ error: 'Story not found.' });
-      }
-
-      const role = req.user?.role;
-      const userId = req.user?.id;
-      const isOwner = data.uploaded_by === userId;
-      const isMod = role === 'admin' || role === 'moderator';
-
-      // SECURITY: Check access permissions
-      if (!isMod && !isOwner && data.moderation_status !== 'approved') {
-        // Don't reveal that the story exists but is not approved
-        return res.status(404).json({ error: 'Story not found.' });
-      }
-
-      res.json(data);
-    } catch (error: any) {
-      console.error('Story fetch error:', error);
-      res.status(500).json({ error: 'Failed to fetch story.' });
+    if (error || !data) {
+      throw new NotFoundError('Story not found.');
     }
-  }
+
+    const role = req.user?.role;
+    const userId = req.user?.id;
+    const isOwner = data.uploaded_by === userId;
+    const isMod = role === 'admin' || role === 'moderator';
+
+    // SECURITY: Check access permissions
+    if (!isMod && !isOwner && data.moderation_status !== 'approved') {
+      // Don't reveal that the story exists but is not approved
+      throw new NotFoundError('Story not found.');
+    }
+
+    res.json(data);
+  })
 );
 
 /**
@@ -151,57 +142,52 @@ router.patch(
   requireAuth,
   validate(uuidParamSchema, 'params'),
   validate(storyUpdateSchema),
-  async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      // SECURITY: Fetch story to check ownership
-      const { data: existing, error: fetchErr } = await supabase
-        .from('stories')
-        .select('uploaded_by')
-        .eq('id', req.params.id)
-        .single();
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    // SECURITY: Fetch story to check ownership
+    const { data: existing, error: fetchErr } = await supabase
+      .from('stories')
+      .select('uploaded_by')
+      .eq('id', req.params.id)
+      .single();
 
-      if (fetchErr || !existing) {
-        return res.status(404).json({ error: 'Story not found.' });
-      }
-
-      const isMod = req.user!.role === 'admin' || req.user!.role === 'moderator';
-      const isOwner = existing.uploaded_by === req.user!.id;
-
-      // SECURITY: Authorization check
-      if (!isOwner && !isMod) {
-        return res.status(403).json({ error: 'Not authorized to edit this story.' });
-      }
-
-      // SECURITY: Regular users cannot modify moderation fields
-      const updateData = { ...req.body };
-      if (!isMod) {
-        delete updateData.moderation_status;
-        delete updateData.moderation_note;
-        delete updateData.is_published;
-        delete updateData.moderated_by;
-        delete updateData.moderated_at;
-      }
-
-      // SECURITY: Normalize theme to lowercase
-      if (updateData.theme) {
-        updateData.theme = updateData.theme.toLowerCase().trim();
-      }
-
-      const { data, error } = await supabase
-        .from('stories')
-        .update(updateData)
-        .eq('id', req.params.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      res.json(data);
-    } catch (error: any) {
-      console.error('Story update error:', error);
-      res.status(500).json({ error: 'Failed to update story.' });
+    if (fetchErr || !existing) {
+      throw new NotFoundError('Story not found.');
     }
-  }
+
+    const isMod = req.user!.role === 'admin' || req.user!.role === 'moderator';
+    const isOwner = existing.uploaded_by === req.user!.id;
+
+    // SECURITY: Authorization check
+    if (!isOwner && !isMod) {
+      throw new AuthorizationError('Not authorized to edit this story.');
+    }
+
+    // SECURITY: Regular users cannot modify moderation fields
+    const updateData = { ...req.body };
+    if (!isMod) {
+      delete updateData.moderation_status;
+      delete updateData.moderation_note;
+      delete updateData.is_published;
+      delete updateData.moderated_by;
+      delete updateData.moderated_at;
+    }
+
+    // SECURITY: Normalize theme to lowercase
+    if (updateData.theme) {
+      updateData.theme = updateData.theme.toLowerCase().trim();
+    }
+
+    const { data, error } = await supabase
+      .from('stories')
+      .update(updateData)
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json(data);
+  })
 );
 
 export default router;

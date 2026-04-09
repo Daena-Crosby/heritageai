@@ -14,6 +14,7 @@ import { Router, Request, Response } from 'express';
 import { getCulturalGuideResponse, GuideMessage } from '../services/ai';
 import { aiLimiter } from '../middleware/rateLimiter';
 import { validate, guideSchema } from '../middleware/validate';
+import { asyncHandler } from '../middleware/errorHandler';
 
 const router = Router();
 
@@ -30,35 +31,18 @@ router.use(aiLimiter);
 router.post(
   '/',
   validate(guideSchema, 'body', { contentFields: ['content'] }),
-  async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { messages } = req.body;
 
     // SECURITY: Limit message history to prevent context exploitation
     // This is validated by schema (max 20) but we also apply server-side limit
     const trimmed: GuideMessage[] = messages.slice(-10);
 
-    try {
-      const reply = await getCulturalGuideResponse(trimmed);
+    // Errors are handled by handleExternalApiError in ai.ts and centralized error handler
+    const reply = await getCulturalGuideResponse(trimmed);
 
-      return res.json({ reply });
-    } catch (err: any) {
-      const msg = err?.message || 'Guide unavailable';
-
-      // SECURITY: Handle external API rate limits gracefully
-      if (msg.toLowerCase().includes('rate limit') || msg.toLowerCase().includes('429')) {
-        return res.status(429).json({
-          error: 'Rate limit reached. Please wait a moment and try again.',
-          retryAfter: 60,
-        });
-      }
-
-      // SECURITY: Don't expose internal error details
-      console.error('Guide error:', err);
-      return res.status(500).json({
-        error: 'Cultural Guide is temporarily unavailable. Please try again.',
-      });
-    }
-  }
+    res.json({ reply });
+  })
 );
 
 export default router;
